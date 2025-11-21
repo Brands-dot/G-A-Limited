@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>G&A Limited</title>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Roboto:wght@400&display=swap" rel="stylesheet">
+
+  <style>
+    /* Reset */
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html, body { height:100%; font-family: 'Roboto', sans-serif; }
+
+    /* Hero Section */
+    .hero {
+      height: 100vh;
+      background: url('image/images/hero.jpg/20231105_122343-scaled.jpg') no-repeat center center/cover;
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      color: #fff;
+    }
+
+    /* Overlay for readability */
+    .hero::after {
+      content: '';
+      position: absolute;
+      top:0; left:0;
+      width:100%; height:100%;
+      background-color: rgba(0,0,0,0.5);
+      z-index:0;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index:1;
+      padding: 0 20px;
+    }
+
+    h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 3.5rem;
+      margin-bottom: 20px;
+      text-shadow: 3px 3px 7px rgba(0,0,0,0.7);
+    }
+
+    p {
+      font-size: 1.3rem;
+      margin-bottom: 30px;
+      max-width: 600px;
+      text-shadow: 2px 2px 5px rgba(0,0,0,0.6);
+    }
+
+    .btn {
+      padding: 14px 30px;
+      background-color: #ff9800;
+      border: none;
+      border-radius: 5px;
+      font-size: 1.1rem;
+      color: #fff;
+      cursor: pointer;
+      text-decoration: none;
+      transition: 0.3s;
+      font-weight: bold;
+    }
+
+    .btn:hover {
+      background-color: #e68900;
+    }
+
+    /* Footer */
+    footer {
+      background: #222;
+      color: #fff;
+      text-align: center;
+      padding: 20px;
+      font-size: 0.9rem;
+    }
+
+    /* Responsive */
+    @media(max-width:1024px){
+      h1 { font-size:3rem; }
+      p { font-size:1.1rem; }
+    }
+
+    @media(max-width:768px){
+      h1 { font-size:2.2rem; }
+      p { font-size:1rem; }
+      .btn { font-size:1rem; padding:12px 25px; }
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-content">
+      <h1>G&A Limited</h1>
+      <p>Quality steel products, reliable solar solutions, and innovative aesthetic designs. Let’s power your projects and transform spaces together.</p>
+      <a href="products.html" class="btn">Explore Products</a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <p>Contact us: info@galimited.com | +254 700 000 000</p>
+    <p>&copy; 2025 G&A Limited. All rights reserved.</p>
+  </footer>
+
+</body>
+</html>
