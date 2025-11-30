@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>G&A Limited - Checkout</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Roboto:wght@400&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  font-family:'Roboto',sans-serif;
+  background:#f4f4f9;
+  color:#333;
+  display:flex;
+  flex-direction:column;
+  min-height:100vh;
+}
+
+/* HEADER */
+header{
+  background:#222;
+  color:#fff;
+  padding:15px 30px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  position:sticky;
+  top:0;
+  z-index:100;
+}
+header a{color:#fff;text-decoration:none;margin-left:20px;font-weight:500;transition:0.3s;}
+header a:hover{color:#ff9800;}
+.logo{font-family:'Playfair Display', serif;font-size:1.8rem;font-weight:bold;}
+
+/* MAIN CONTAINER */
+.container{max-width:900px;margin:50px auto;padding:0 20px;flex:1;}
+h2{font-family:'Playfair Display', serif;font-size:2rem;margin-bottom:20px;text-align:center;color:#222;}
+
+/* CART TABLE */
+table{width:100%;border-collapse:collapse;margin-bottom:20px;}
+th,td{border:1px solid #ccc;padding:12px;text-align:center;}
+th{background:#ff9800;color:#fff;}
+tr:nth-child(even){background:#f9f9f9;}
+
+/* BUTTONS */
+.btn{
+  display:inline-block;
+  padding:10px 20px;
+  background:#ff9800;
+  color:#fff;
+  border-radius:8px;
+  text-decoration:none;
+  font-weight:bold;
+  cursor:pointer;
+  transition:0.3s;
+}
+.btn:hover{background:#e68900;}
+
+/* FORM */
+.checkout-form{background:#fff;padding:20px;border-radius:10px;box-shadow:0 5px 15px rgba(0,0,0,0.1);}
+.checkout-form input, .checkout-form select, .checkout-form textarea{
+  width:100%;padding:12px;margin-bottom:15px;border-radius:6px;border:1px solid #ccc;font-size:1rem;
+}
+.checkout-form h3{margin-bottom:15px;color:#222;}
+.checkout-form label{font-weight:bold;}
+
+/* FOOTER */
+footer{background:#222;color:#fff;text-align:center;padding:25px;margin-top:auto;}
+
+/* MOBILE */
+@media(max-width:768px){
+  table, th, td{font-size:0.9rem;}
+  th, td{padding:8px;}
+  .checkout-form input, .checkout-form select, .checkout-form textarea{padding:10px;font-size:0.9rem;}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">G&A Limited</div>
+  <nav>
+    <a href="products.html">Back to Products</a>
+  </nav>
+</header>
+
+<div class="container">
+  <h2>Shopping Cart</h2>
+  <table id="cartTable">
+    <thead>
+      <tr>
+        <th>Product</th>
+        <th>Gauge</th>
+        <th>Qty</th>
+        <th>Price</th>
+        <th>Total</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+  <h3 id="grandTotal">Grand Total: KES 0</h3>
+  <button class="btn" id="checkoutBtn">Proceed to Checkout</button>
+
+  <div id="checkoutSection" style="display:none;">
+    <h2>Checkout</h2>
+    <div class="checkout-form">
+      <h3>Customer Details</h3>
+
+      <label for="custName">Full Name</label>
+      <input type="text" id="custName" placeholder="John Doe">
+
+      <label for="custPhone">Phone Number</label>
+      <input type="text" id="custPhone" placeholder="+254 700 000 000">
+
+      <label for="custEmail">Email Address</label>
+      <input type="email" id="custEmail" placeholder="example@gmail.com">
+
+      <label for="custAddress">Delivery Address</label>
+      <textarea id="custAddress" placeholder="Enter your delivery address"></textarea>
+
+      <label for="paymentMethod">Payment Method</label>
+      <select id="paymentMethod">
+        <option value="cod">Cash on Delivery</option>
+        <option value="mpesa">M-PESA</option>
+      </select>
+
+      <button class="btn" id="placeOrderBtn">Place Order</button>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <p>Contact us: info@galimited.com | +254 700 000 000</p>
+  <p>&copy; 2025 G&A Limited. All rights reserved.</p>
+</footer>
+
+<script>
+const cartTableBody=document.querySelector('#cartTable tbody');
+const grandTotalEl=document.getElementById('grandTotal');
+let cart=JSON.parse(localStorage.getItem('cart'))||[];
+
+// Render cart
+function renderCart(){
+  cartTableBody.innerHTML='';
+  let grandTotal=0;
+  cart.forEach((item,index)=>{
+    const total=item.price*item.quantity;
+    grandTotal+=total;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td>${item.name}</td>
+      <td>${item.gauge || 'None'}</td>
+      <td><input type="number" value="${item.quantity}" min="1" style="width:60px;" onchange="updateQty(${index}, this.value)"></td>
+      <td>${item.price}</td>
+      <td>${total}</td>
+      <td><button class="btn" onclick="removeItem(${index})">Remove</button></td>
+    `;
+    cartTableBody.appendChild(tr);
+  });
+  grandTotalEl.textContent=`Grand Total: KES ${grandTotal}`;
+}
+
+function updateQty(index,value){
+  cart[index].quantity=parseInt(value);
+  localStorage.setItem('cart',JSON.stringify(cart));
+  renderCart();
+}
+
+function removeItem(index){
+  cart.splice(index,1);
+  localStorage.setItem('cart',JSON.stringify(cart));
+  renderCart();
+}
+
+// Checkout
+const checkoutBtn=document.getElementById('checkoutBtn');
+const checkoutSection=document.getElementById('checkoutSection');
+checkoutBtn.onclick=()=>{
+  if(cart.length===0){alert('Cart is empty!');return;}
+  checkoutSection.style.display='block';
+  window.scrollTo({top:0,behavior:'smooth'});
+};
+
+document.getElementById('placeOrderBtn').onclick=()=>{
+  const name=document.getElementById('custName').value.trim();
+  const phone=document.getElementById('custPhone').value.trim();
+  const email=document.getElementById('custEmail').value.trim();
+  const address=document.getElementById('custAddress').value.trim();
+  const payment=document.getElementById('paymentMethod').value;
+
+  if(!name||!phone||!email||!address){
+    alert('Please fill all details');
+    return;
+  }
+
+  const order={
+    customer:{name,phone,email,address,payment},
+    items:cart,
+    total:cart.reduce((a,b)=>a+(b.price*b.quantity),0),
+    date:new Date().toLocaleString()
+  };
+
+  // Save orders
+  const orders=JSON.parse(localStorage.getItem('orders'))||[];
+  orders.push(order);
+  localStorage.setItem('orders',JSON.stringify(orders));
+
+  alert('Order placed successfully!');
+  cart=[];
+  localStorage.setItem('cart',JSON.stringify(cart));
+  renderCart();
+  checkoutSection.style.display='none';
+};
+
+// Initial render
+renderCart();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>G&A Limited - Owner Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Roboto:wght@400&display=swap" rel="stylesheet">
+<style>
+  body { font-family:'Roboto',sans-serif; background:#2c2c2c; color:#f4f4f9; padding:20px; margin:0; }
+  h2,h3 { font-family:'Playfair Display', serif; margin-bottom:20px; text-align:center; color:#fff; }
+  .container { max-width:900px; margin:0 auto; }
+  input, textarea, select { display:block; width:100%; padding:12px; margin-bottom:15px; border-radius:6px; border:1px solid #555; font-size:1rem; background:#444; color:#fff; }
+  textarea { resize:vertical; }
+  button { padding:14px 25px; background:#ff9800; color:#fff; border:none; border-radius:10px; font-weight:bold; font-size:1.1rem; cursor:pointer; transition:0.3s; }
+  button:hover { background:#e68900; }
+  .category-list, .product-list, .order-list { display:flex; flex-wrap:wrap; gap:15px; justify-content:center; margin-top:20px; }
+  .category-card, .product-card, .order-card {
+    background:#333; padding:15px; border-radius:10px; box-shadow:0 5px 15px rgba(0,0,0,0.3); width:250px; text-align:center;
+  }
+  .category-card:hover, .product-card:hover, .order-card:hover { transform:translateY(-5px); box-shadow:0 8px 25px rgba(0,0,0,0.4); }
+  .product-card img, .category-card img { width:100%; height:150px; object-fit:cover; border-radius:5px; margin-bottom:10px; }
+  .logout { float:right; background:#222; color:#fff; padding:10px 15px; border-radius:5px; margin-top:-60px; cursor:pointer; font-weight:bold; }
+  .logout:hover { background:#555; }
+  @media(max-width:1024px){ .category-card, .product-card, .order-card { width:45%; } }
+  @media(max-width:768px){
+    body{ padding:10px; }
+    .category-card, .product-card, .order-card { width:100%; }
+    button { width:100%; font-size:1.2rem; padding:16px; }
+    input, textarea, select { font-size:1.1rem; padding:14px; }
+    .logout { float:none; display:block; width:100%; margin-bottom:20px; }
+  }
+  .small-btn { padding:8px 10px; margin:6px; border-radius:6px; cursor:pointer; border:none; font-weight:bold; }
+  .edit-btn { background:#ffaa00; color:#111; }
+  .del-btn { background:#d63031; color:#fff; }
+  .mark-btn { background:#4caf50; color:#fff; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h2>Owner Dashboard</h2>
+  <button class="logout" onclick="logout()">Logout</button>
+
+  <h3>Add New Category</h3>
+  <input type="text" id="catName" placeholder="Category Name">
+  <input type="file" id="catImg" accept="image/*">
+  <button onclick="addCategory()">Add Category</button>
+
+  <h3>Categories</h3>
+  <div class="category-list" id="categoryList"></div>
+
+  <h3>Add Product to Category</h3>
+  <select id="prodCategory"></select>
+  <input type="text" id="prodName" placeholder="Product Name">
+  <textarea id="prodDesc" placeholder="Product Description"></textarea>
+  <input type="number" id="prodPrice" placeholder="Price">
+  <input type="file" id="prodImg" accept="image/*">
+  <input type="text" id="prodGauges" placeholder="Gauges (comma-separated, optional)">
+  <button onclick="addProduct()">Add Product</button>
+
+  <h3>Products</h3>
+  <div class="product-list" id="productList"></div>
+
+  <h3>Customer Orders</h3>
+  <div class="order-list" id="orderList"></div>
+</div>
+
+<script>
+/* -------------------------
+   Authentication check
+   ------------------------- */
+if (localStorage.getItem('ownerLoggedIn') !== 'true') {
+  window.location.href = 'owner-login.html';
+}
+
+/* -------------------------
+   Data (LocalStorage keys)
+   categories  -> [{name,img}]
+   products    -> [{id,name,desc,price,img,gauges:[],category}]
+   orders      -> [{productName,category,quantity,gauge,total,time,completed, customer:{name,phone,email,location}}]
+   ------------------------- */
+let categories = JSON.parse(localStorage.getItem('categories')) || [];
+let products = JSON.parse(localStorage.getItem('products')) || [];
+let orders = JSON.parse(localStorage.getItem('orders')) || [];
+
+/* -------------------------
+   Utilities
+   ------------------------- */
+function saveCategories(){ localStorage.setItem('categories', JSON.stringify(categories)); }
+function saveProducts(){ localStorage.setItem('products', JSON.stringify(products)); }
+function saveOrders(){ localStorage.setItem('orders', JSON.stringify(orders)); }
+
+/* -------------------------
+   Category Functions
+   ------------------------- */
+function addCategory(){
+  const name = document.getElementById('catName').value.trim();
+  const imgInput = document.getElementById('catImg');
+  if(!name){ alert('Enter category name'); return; }
+  if(!imgInput.files || imgInput.files.length===0){ alert('Select an image for the category'); return; }
+
+  const reader = new FileReader();
+  reader.onload = function(e){
+    categories.push({ name, img: e.target.result });
+    saveCategories();
+    displayCategories();
+    populateCategorySelect();
+    document.getElementById('catName').value = '';
+    imgInput.value = '';
+  };
+  reader.readAsDataURL(imgInput.files[0]);
+}
+
+function displayCategories(){
+  const list = document.getElementById('categoryList');
+  list.innerHTML = '';
+  categories.forEach((cat, idx) => {
+    const d = document.createElement('div');
+    d.className = 'category-card';
+    d.innerHTML = `
+      <img src="${cat.img}" alt="${cat.name}">
+      <strong>${cat.name}</strong><br><br>
+      <button class="small-btn edit-btn" onclick="editCategory(${idx})">Edit</button>
+      <button class="small-btn del-btn" onclick="deleteCategory(${idx})">Delete</button>
+    `;
+    list.appendChild(d);
+  });
+}
+
+function populateCategorySelect(){
+  const sel = document.getElementById('prodCategory');
+  sel.innerHTML = '';
+  categories.forEach((c,i)=>{
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.text = c.name;
+    sel.appendChild(opt);
+  });
+}
+
+function editCategory(index){
+  const oldName = categories[index].name;
+  const newName = prompt('New category name:', oldName);
+  if(!newName) return;
+  categories[index].name = newName;
+
+  // update products that referenced old category name
+  products = products.map(p => {
+    if(p.category === oldName) p.category = newName;
+    return p;
+  });
+
+  saveCategories();
+  saveProducts();
+  displayCategories();
+  populateCategorySelect();
+  displayProducts();
+}
+
+function deleteCategory(index){
+  if(!confirm('Delete this category? This will also remove products in it.')) return;
+  const catName = categories[index].name;
+  categories.splice(index,1);
+  products = products.filter(p => p.category !== catName);
+  saveCategories(); saveProducts();
+  displayCategories(); populateCategorySelect(); displayProducts();
+}
+
+/* -------------------------
+   Product Functions
+   ------------------------- */
+function addProduct(){
+  const catIndex = document.getElementById('prodCategory').value;
+  if(catIndex === '' || categories.length===0){ alert('Create a category first'); return; }
+
+  const name = document.getElementById('prodName').value.trim();
+  const desc = document.getElementById('prodDesc').value.trim();
+  const price = parseFloat(document.getElementById('prodPrice').value);
+  const imgInput = document.getElementById('prodImg');
+  const gaugesRaw = document.getElementById('prodGauges').value.trim();
+
+  if(!name || !desc || isNaN(price) || !imgInput.files || imgInput.files.length===0){
+    alert('Fill all product fields and select an image'); return;
+  }
+
+  const gauges = gaugesRaw ? gaugesRaw.split(',').map(s=>s.trim()).filter(Boolean) : [];
+
+  const reader = new FileReader();
+  reader.onload = function(e){
+    // create a small unique id for the product
+    const id = 'p_' + Date.now() + '_' + Math.floor(Math.random()*1000);
+    const product = {
+      id, name, desc, price, img: e.target.result, gauges, category: categories[catIndex].name
+    };
+    products.push(product);
+    saveProducts();
+    displayProducts();
+
+    // reset form
+    document.getElementById('prodName').value = '';
+    document.getElementById('prodDesc').value = '';
+    document.getElementById('prodPrice').value = '';
+    document.getElementById('prodGauges').value = '';
+    imgInput.value = '';
+  };
+  reader.readAsDataURL(imgInput.files[0]);
+}
+
+function displayProducts(){
+  const list = document.getElementById('productList');
+  list.innerHTML = '';
+  products.forEach((p, idx) => {
+    const d = document.createElement('div');
+    d.className = 'product-card';
+    d.innerHTML = `
+      <img src="${p.img}" alt="${p.name}">
+      <strong>${p.name}</strong><br>
+      <small style="color:#ccc">${p.category}</small><br>
+      KES ${p.price}<br>
+      <div style="height:8px"></div>
+      ${p.desc.substring(0,120)}${p.desc.length>120?'...':''}
+      <div style="height:10px"></div>
+      Gauges: ${p.gauges.length ? p.gauges.join(', ') : 'None'}<br><br>
+      <button class="small-btn edit-btn" onclick="editProduct(${idx})">Edit</button>
+      <button class="small-btn del-btn" onclick="deleteProduct(${idx})">Delete</button>
+    `;
+    list.appendChild(d);
+  });
+}
+
+function editProduct(index){
+  const p = products[index];
+  const newName = prompt('Product name:', p.name); if(!newName) return;
+  const newDesc = prompt('Description:', p.desc); if(!newDesc) return;
+  const newPrice = prompt('Price:', p.price); if(!newPrice) return;
+  const newGauges = prompt('Gauges (comma-separated):', p.gauges.join(', '));
+  products[index].name = newName;
+  products[index].desc = newDesc;
+  products[index].price = parseFloat(newPrice);
+  products[index].gauges = newGauges ? newGauges.split(',').map(s=>s.trim()).filter(Boolean) : [];
+  saveProducts();
+  displayProducts();
+}
+
+function deleteProduct(index){
+  if(!confirm('Delete this product?')) return;
+  products.splice(index,1);
+  saveProducts();
+  displayProducts();
+}
+
+/* -------------------------
+   Orders Functions
+   Expected order shape:
+   {
+     productName, category, quantity, gauge, total, time, completed (bool),
+     customer: { name, phone, email, location }
+   }
+   ------------------------- */
+function displayOrders(){
+  const list = document.getElementById('orderList');
+  list.innerHTML = '';
+
+  if(!orders || orders.length === 0){
+    list.innerHTML = '<p>No orders yet.</p>';
+    return;
+  }
+
+  orders.slice().reverse().forEach((order, iReverse)=>{
+    // show newest first: compute original index
+    const idx = orders.length - 1 - iReverse;
+
+    const d = document.createElement('div');
+    d.className = 'order-card';
+
+    // build safe strings (avoid undefined)
+    const cname = (order.customer && order.customer.name) ? order.customer.name : (order.customerName || 'N/A');
+    const cphone = (order.customer && order.customer.phone) ? order.customer.phone : (order.customerPhone || 'N/A');
+    const cemail = (order.customer && order.customer.email) ? order.customer.email : (order.customerEmail || 'N/A');
+    const clocation = (order.customer && order.customer.location) ? order.customer.location : (order.customerLocation || 'N/A');
+
+    d.innerHTML = `
+      <strong>Product:</strong> ${escapeHtml(order.productName || order.product || 'N/A')}<br>
+      <strong>Category:</strong> ${escapeHtml(order.category || 'N/A')}<br>
+      <strong>Quantity:</strong> ${order.quantity || 0}<br>
+      <strong>Gauge:</strong> ${escapeHtml(order.gauge || 'None')}<br>
+      <strong>Total:</strong> KES ${order.total || 0}<br>
+      <strong>Date:</strong> ${order.time || order.date || 'N/A'}<br><br>
+
+      <strong>Customer Details</strong><br>
+      Name: ${escapeHtml(cname)}<br>
+      Phone: ${escapeHtml(cphone)}<br>
+      Email: ${escapeHtml(cemail)}<br>
+      Location: ${escapeHtml(clocation)}<br><br>
+
+      <button class="small-btn del-btn" onclick="deleteOrder(${idx})">Delete</button>
+      <button class="small-btn mark-btn" onclick="toggleCompleted(${idx})">
+        ${order.completed ? 'Completed ✓' : 'Mark Completed'}
+      </button>
+    `;
+    list.appendChild(d);
+  });
+}
+
+function deleteOrder(index){
+  if(!confirm('Delete this order?')) return;
+  orders.splice(index,1);
+  saveOrders();
+  displayOrders();
+}
+
+function toggleCompleted(index){
+  orders[index].completed = !orders[index].completed;
+  saveOrders();
+  displayOrders();
+}
+
+/* -------------------------
+   Escape helper to avoid broken HTML if any string contains HTML
+   ------------------------- */
+function escapeHtml(str){
+  if(typeof str !== 'string') return str;
+  return str.replace(/[&<>"']/g,function(m){
+    return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]);
+  });
+}
+
+/* -------------------------
+   Logout
+   ------------------------- */
+function logout(){
+  localStorage.removeItem('ownerLoggedIn');
+  // keep user on login page
+  window.location.href = 'owner-login.html';
+}
+
+/* -------------------------
+   On load: display everything
+   ------------------------- */
+window.addEventListener('load', function(){
+  // reload data from localStorage in case something changed
+  categories = JSON.parse(localStorage.getItem('categories')) || [];
+  products = JSON.parse(localStorage.getItem('products')) || [];
+  orders = JSON.parse(localStorage.getItem('orders')) || [];
+
+  displayCategories();
+  populateCategorySelect();
+  displayProducts();
+  displayOrders();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>G&A Limited - Product Detail</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Roboto:wght@400&display=swap" rel="stylesheet">
+<style>
+  body { font-family:'Roboto',sans-serif; background:#f4f4f9; margin:0; }
+  .back { display:flex; align-items:center; padding:15px 20px; font-weight:bold; text-decoration:none; color:#222; }
+  .back:hover { color:#ff9800; }
+  .container { max-width:600px; margin:50px auto; background:#fff; border-radius:15px; padding:20px; box-shadow:0 10px 25px rgba(0,0,0,0.1); }
+  .container img { width:100%; border-radius:10px; margin-bottom:20px; }
+  h2 { font-family:'Playfair Display', serif; margin-bottom:15px; }
+  p { margin-bottom:10px; color:#555; }
+  label { display:block; margin:10px 0 5px; }
+  select,input { width:100%; padding:10px; border-radius:5px; border:1px solid #ccc; }
+  .price { font-weight:bold; font-size:1.2rem; margin-bottom:15px; }
+  .btn { display:inline-block; padding:12px 25px; background:#ff9800; color:#fff; border-radius:8px; text-decoration:none; font-weight:bold; transition:0.3s; cursor:pointer; }
+  .btn:hover { background:#e68900; }
+</style>
+</head>
+<body>
+
+<a class="back" href="products.html">&#8592; Back to Products</a>
+
+<div class="container" id="productContainer">
+  <!-- Product details populated by JS -->
+</div>
+
+<script>
+  const products = [
+    { 
+      name: "Steel", category: "Steel", img: "image/steel.jpeg", desc: "Premium steel rods and sheets suitable for construction and industrial use.",
+      price: 1200, gauges: ["10mm","12mm","16mm"] 
+    },
+    { 
+      name: "Solar Panel", category: "Solar", img: "image/solar.jpeg", desc: "High-efficiency panels for residential and commercial solar installations.",
+      price: 8000, gauges: [] 
+    }
+  ];
+
+  // Get product index from URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const index = urlParams.get('index');
+  const product = products[index];
+
+  const container = document.getElementById('productContainer');
+
+  container.innerHTML = `
+    <img src="${product.img}" alt="${product.name}">
+    <h2>${product.name}</h2>
+    <p>${product.desc}</p>
+    <p class="price">KES ${product.price}</p>
+    ${product.gauges.length ? `<label>Gauge:
+      <select id="gaugeSelect">${product.gauges.map(g=>`<option value="${g}">${g}</option>`).join('')}</select>
+    </label>` : ''}
+    <label>Quantity:
+      <input type="number" id="qtyInput" value="1" min="1">
+    </label>
+    <a class="btn" href="#">Add to Cart / Order</a>
+  `;
+</script>
+
+</body>
+</html>
