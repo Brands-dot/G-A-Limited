@@ -22,16 +22,6 @@ h2,h3{
 }
 .container{ max-width:1000px; margin:auto; }
 
-input,textarea,select{
-  width:100%;
-  padding:12px;
-  margin-bottom:15px;
-  background:#333;
-  border:1px solid #555;
-  border-radius:6px;
-  color:#fff;
-}
-
 button{
   background:#ff9800;
   color:#fff;
@@ -48,18 +38,17 @@ button{
   border-radius:6px;
   font-weight:bold;
 }
-.edit-btn{ background:#ffaa00; color:#111; }
 .del-btn{ background:#d63031; color:#fff; }
 .mark-btn{ background:#4caf50; color:#fff; }
 
-.category-list,.product-list,.order-list{
+.order-list{
   display:flex;
   flex-wrap:wrap;
   gap:15px;
   justify-content:center;
 }
 
-.category-card,.product-card,.order-card{
+.order-card{
   background:#2c2c2c;
   padding:15px;
   border-radius:10px;
@@ -74,7 +63,7 @@ button{
   cursor:pointer;
 }
 
-/* ---------- TOAST ---------- */
+/* Toast */
 #toastContainer{
   position:fixed;
   top:20px;
@@ -84,7 +73,6 @@ button{
   gap:10px;
   z-index:9999;
 }
-
 .toast{
   background:#333;
   padding:15px 20px;
@@ -93,23 +81,9 @@ button{
   box-shadow:0 10px 30px rgba(0,0,0,.4);
   animation:slideIn .3s ease;
 }
-
 .toast.success{ background:#4caf50; }
 .toast.error{ background:#d63031; }
 .toast.info{ background:#2196f3; }
-
-.toast-actions{
-  display:flex;
-  justify-content:flex-end;
-  gap:10px;
-  margin-top:10px;
-}
-
-.toast button{
-  padding:6px 12px;
-  border-radius:6px;
-  font-size:.9rem;
-}
 
 @keyframes slideIn{
   from{ opacity:0; transform:translateY(-10px); }
@@ -130,108 +104,88 @@ button{
 
 <div id="toastContainer"></div>
 
-<script>
-/* ---------------- AUTH ---------------- */
-if(localStorage.getItem("ownerLoggedIn")!=="true"){
-  location.href="owner-login.html";
+<script type="module">
+import { auth, db } from './firebase.js';
+import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import { collection, getDocs, deleteDoc, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+// ---------------- AUTH ----------------
+onAuthStateChanged(auth, user => {
+  if (!user) window.location.href = 'owner-login.html';
+});
+
+// ---------------- TOAST ----------------
+function showToast(msg, type="info") {
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = msg;
+  document.getElementById('toastContainer').appendChild(t);
+  setTimeout(() => t.remove(), 3000);
 }
 
-let orders = JSON.parse(localStorage.getItem("orders")) || [];
+// ---------------- ORDERS ----------------
+const orderList = document.getElementById('orderList');
 
-/* ---------------- TOAST ---------------- */
-function showToast(msg,type="info",actions=null){
-  const t=document.createElement("div");
-  t.className=`toast ${type}`;
-  t.innerHTML=`<div>${msg}</div>`;
-
-  if(actions){
-    const act=document.createElement("div");
-    act.className="toast-actions";
-    actions.forEach(a=>{
-      const b=document.createElement("button");
-      b.textContent=a.text;
-      b.onclick=()=>{ a.action(); t.remove(); };
-      act.appendChild(b);
-    });
-    t.appendChild(act);
-  } else {
-    setTimeout(()=>t.remove(),3000);
-  }
-
-  document.getElementById("toastContainer").appendChild(t);
-}
-
-/* ---------------- ORDERS ---------------- */
-function displayOrders(){
-  const list=document.getElementById("orderList");
-  list.innerHTML="";
-
-  if(orders.length===0){
-    list.innerHTML="<p>No orders yet.</p>";
+async function displayOrders() {
+  orderList.innerHTML = "";
+  const ordersSnap = await getDocs(collection(db, "orders"));
+  if (ordersSnap.empty) {
+    orderList.innerHTML = "<p>No orders yet.</p>";
     return;
   }
 
-  orders.slice().reverse().forEach((o,ri)=>{
-    const i=orders.length-1-ri;
-    const d=document.createElement("div");
-    d.className="order-card";
+  ordersSnap.forEach(docSnap => {
+    const o = docSnap.data();
+    const id = docSnap.id;
 
-    let items="";
-    o.items.forEach(it=>{
-      items+=`
-        <b>${it.name}</b><br>
-        Qty: ${it.quantity}<br>
-        Total: KES ${it.price*it.quantity}<hr>
-      `;
-    });
+    const card = document.createElement('div');
+    card.className = 'order-card';
 
-    d.innerHTML=`
-      ${items}
+    let itemsHTML = "";
+    o.items?.forEach(it => itemsHTML += `
+      <b>${it.name}</b><br>
+      Qty: ${it.quantity}<br>
+      Total: KES ${it.price*it.quantity}<hr>
+    `);
+
+    card.innerHTML = `
+      ${itemsHTML}
       <b>Customer:</b><br>
-      ${o.customer.name}<br>
-      ${o.customer.phone}<br>
-      ${o.customer.email}<br><br>
-
-      <button class="small-btn del-btn" onclick="confirmDeleteOrder(${i})">Delete</button>
-      <button class="small-btn mark-btn" onclick="toggleCompleted(${i})">
-        ${o.completed?"Completed ✓":"Mark Completed"}
+      ${o.customer?.name || "N/A"}<br>
+      ${o.customer?.phone || "N/A"}<br>
+      ${o.customer?.email || "N/A"}<br><br>
+      <button class="small-btn del-btn" onclick="deleteOrder('${id}')">Delete</button>
+      <button class="small-btn mark-btn" onclick="toggleCompleted('${id}', ${o.completed})">
+        ${o.completed ? "Completed ✓" : "Mark Completed"}
       </button>
     `;
-    list.appendChild(d);
+    orderList.appendChild(card);
   });
 }
 
-function confirmDeleteOrder(i){
-  showToast(
-    "Delete this order?",
-    "error",
-    [
-      { text:"Cancel", action:()=>{} },
-      { text:"Delete", action:()=>deleteOrder(i) }
-    ]
-  );
-}
-
-function deleteOrder(i){
-  orders.splice(i,1);
-  localStorage.setItem("orders",JSON.stringify(orders));
+async function deleteOrder(id) {
+  await deleteDoc(doc(db, "orders", id));
+  showToast("Order deleted", "success");
   displayOrders();
-  showToast("Order deleted","success");
 }
 
-function toggleCompleted(i){
-  orders[i].completed=!orders[i].completed;
-  localStorage.setItem("orders",JSON.stringify(orders));
+async function toggleCompleted(id, current) {
+  await updateDoc(doc(db, "orders", id), { completed: !current });
+  showToast("Order updated", "info");
   displayOrders();
-  showToast("Order updated","info");
 }
 
-function logout(){
-  localStorage.removeItem("ownerLoggedIn");
-  location.href="owner-login.html";
+// ---------------- LOGOUT ----------------
+function logout() {
+  signOut(auth).then(() => {
+    localStorage.removeItem('ownerLoggedIn');
+    window.location.href = 'owner-login.html';
+  });
 }
 
+// Initial load
 displayOrders();
 </script>
+
 </body>
 </html>
