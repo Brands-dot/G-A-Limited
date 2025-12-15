@@ -169,6 +169,30 @@ footer{
   background:#222;
 }
 
+/* TOAST NOTIFICATIONS */
+#toastContainer{
+  position:fixed;
+  top:20px;
+  right:20px;
+  z-index:1000;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.toast{
+  padding:15px 20px;
+  border-radius:10px;
+  color:#fff;
+  min-width:200px;
+  font-weight:bold;
+  opacity:0;
+  transform: translateY(-20px);
+  transition:0.3s;
+}
+.toast.success{background:#4caf50;}
+.toast.error{background:#d63031;}
+.toast.info{background:#2196f3;}
+.toast.show{opacity:1; transform:translateY(0);}
 @media(max-width:1024px){.card{width:45%;}}
 @media(max-width:768px){.card{width:90%;}}
 </style>
@@ -218,6 +242,9 @@ footer{
   </div>
 </div>
 
+<!-- TOAST CONTAINER -->
+<div id="toastContainer"></div>
+
 <script>
 const categoriesDiv=document.getElementById('categories');
 const productsDiv=document.getElementById('products');
@@ -237,6 +264,17 @@ const addToCartBtn=document.getElementById('addToCartBtn');
 const categories=JSON.parse(localStorage.getItem('categories'))||[];
 const products=JSON.parse(localStorage.getItem('products'))||[];
 
+// TOAST FUNCTION
+function showToast(message,type='info',duration=3000){
+    const container=document.getElementById('toastContainer');
+    const toast=document.createElement('div');
+    toast.className=`toast ${type} show`;
+    toast.textContent=message;
+    container.appendChild(toast);
+    setTimeout(()=>{ toast.remove(); },duration);
+}
+
+// CATEGORY & PRODUCT DISPLAY
 function showCategories(){
   title.textContent="Product Categories";
   categoriesDiv.style.display='flex';
@@ -254,13 +292,13 @@ function openModal(p){
   modalGauge.innerHTML = '';
   if(p.gauges.length){
     p.gauges.forEach(g=>{
-      const option = document.createElement('option');
+      const option=document.createElement('option');
       option.value=g;
       option.textContent=g;
       modalGauge.appendChild(option);
     });
   } else {
-    const option = document.createElement('option');
+    const option=document.createElement('option');
     option.value='';
     option.textContent='None';
     modalGauge.appendChild(option);
@@ -279,14 +317,12 @@ function openModal(p){
       img:p.img
     });
     localStorage.setItem('cart',JSON.stringify(cart));
-    alert('Item added to cart!');
+    showToast('Item added to cart!', 'success');
     closeModal();
   }
 }
 
-function closeModal(){
-  modal.style.display='none';
-}
+function closeModal(){ modal.style.display='none'; }
 
 function showProducts(catName){
   title.textContent=catName+" Products";

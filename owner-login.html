@@ -4,9 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>G&A Limited - Owner Login</title>
+
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Roboto:wght@400&display=swap" rel="stylesheet">
+
 <style>
-body {
+body{
   font-family:'Roboto',sans-serif;
   background:#2c2c2c;
   color:#fff;
@@ -23,10 +25,13 @@ body {
   width:90%;
   max-width:400px;
   text-align:center;
+  box-shadow:0 10px 30px rgba(0,0,0,.4);
 }
-h2{ font-family:'Playfair Display', serif; margin-bottom:30px; }
+h2{
+  font-family:'Playfair Display', serif;
+  margin-bottom:30px;
+}
 input{
-  display:block;
   width:100%;
   padding:12px;
   margin-bottom:20px;
@@ -46,39 +51,64 @@ button{
   font-weight:bold;
   font-size:1.1rem;
   cursor:pointer;
-  transition:0.3s;
 }
 button:hover{ background:#e68900; }
-.error{ color:#ff4d4d; margin-bottom:15px; display:none; }
+.error{
+  color:#ff4d4d;
+  margin-bottom:15px;
+  display:none;
+}
 </style>
 </head>
+
 <body>
 
 <div class="container">
   <h2>Owner Login</h2>
-  <div class="error" id="errorMsg">Invalid username or password!</div>
-  <input type="text" id="username" placeholder="Username">
+
+  <div class="error" id="errorMsg"></div>
+
+  <input type="email" id="email" placeholder="Owner Email">
   <input type="password" id="password" placeholder="Password">
-  <button onclick="login()">Login</button>
+
+  <button id="loginBtn">Login</button>
 </div>
 
-<script>
-// Define your owner credentials here
-const OWNER_USERNAME = "admin";
-const OWNER_PASSWORD = "admin123";
+<script type="module">
+import { auth } from "./firebase.js";
+import { signInWithEmailAndPassword, onAuthStateChanged } 
+from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-function login(){
-  const user=document.getElementById('username').value.trim();
-  const pass=document.getElementById('password').value;
+const loginBtn = document.getElementById("loginBtn");
+const errorMsg = document.getElementById("errorMsg");
 
-  if(user===OWNER_USERNAME && pass===OWNER_PASSWORD){
-    localStorage.setItem('ownerLoggedIn', 'true'); // sets login flag
-    window.location.href="owner-dashboard.html";   // redirect to dashboard
-  } else {
-    const error=document.getElementById('errorMsg');
-    error.style.display='block';
+loginBtn.addEventListener("click", async () => {
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+
+  errorMsg.style.display = "none";
+
+  if (!email || !password) {
+    errorMsg.textContent = "Please fill in all fields";
+    errorMsg.style.display = "block";
+    return;
   }
-}
+
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+    window.location.href = "owner-dashboard.html";
+  } catch (error) {
+    errorMsg.textContent = error.message;
+    errorMsg.style.display = "block";
+  }
+});
+
+// Auto-redirect if already logged in
+onAuthStateChanged(auth, user => {
+  if (user) {
+    window.location.href = "owner-dashboard.html";
+  }
+});
 </script>
 
 </body>

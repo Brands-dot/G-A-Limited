@@ -1,0 +1,10 @@
+G-A-Limited/
+│
+├─ index.html
+├─ products.html
+├─ owner-login.html
+├─ owner-dashboard.html
+├─ orders.html
+├─ firebase.js   ✅ REQUIRED
+├─ /assets
+│   └─ images/
