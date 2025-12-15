@@ -131,6 +131,158 @@ function logout(){
   localStorage.removeItem('ownerLoggedIn');
   signOut(auth).then(()=>location.href='owner-login.html');
 }
+</script><!-- Only the relevant script part, use your existing HTML -->
+<script>
+/* ---------------- SECURITY ---------------- */
+if(localStorage.getItem("ownerLoggedIn")!=="true"){
+  location.href="owner-login.html";
+}
+
+/* ---------------- LOAD DATA ---------------- */
+let categories = JSON.parse(localStorage.getItem("categories")) || [];
+let products = JSON.parse(localStorage.getItem("products")) || [];
+let orders = JSON.parse(localStorage.getItem("orders")) || [];
+
+/* ---------------- TOAST ---------------- */
+function showToast(msg,type="info"){
+  const t=document.createElement("div");
+  t.className=`toast ${type}`;
+  t.textContent=msg;
+  document.getElementById("toastContainer").appendChild(t);
+  setTimeout(()=>t.remove(),3000);
+}
+
+/* ---------------- CATEGORY ---------------- */
+function addCategory(){
+  const name = document.getElementById("catName").value.trim();
+  const file = document.getElementById("catImg").files[0];
+  if(!name || !file){ return showToast("Fill all category fields","error"); }
+
+  const reader = new FileReader();
+  reader.onload = e=>{
+    categories.push({ name, img:e.target.result });
+    localStorage.setItem("categories", JSON.stringify(categories));
+    displayCategories(); showToast("Category added","success");
+    document.getElementById("catName").value = "";
+    document.getElementById("catImg").value = "";
+  };
+  reader.readAsDataURL(file);
+}
+
+function displayCategories(){
+  const list = document.getElementById("categoryList");
+  list.innerHTML = "";
+  categories.forEach((c,i)=>{
+    const div = document.createElement("div");
+    div.className = "category-card";
+    div.innerHTML = `
+      <img src="${c.img}" style="width:100%;height:120px;object-fit:cover;">
+      <strong>${c.name}</strong><br><br>
+      <button class="small-btn edit-btn" onclick="editCategory(${i})">Edit</button>
+      <button class="small-btn del-btn" onclick="deleteCategory(${i})">Delete</button>
+    `;
+    list.appendChild(div);
+  });
+}
+
+function editCategory(i){
+  const newName = prompt("New name:", categories[i].name);
+  if(!newName) return;
+  const oldName = categories[i].name;
+  categories[i].name = newName;
+  products.forEach(p=>{if(p.category===oldName)p.category=newName});
+  localStorage.setItem("categories", JSON.stringify(categories));
+  localStorage.setItem("products", JSON.stringify(products));
+  displayCategories(); displayProducts();
+  showToast("Category updated","info");
+}
+
+function deleteCategory(i){
+  const catName = categories[i].name;
+  categories.splice(i,1);
+  products = products.filter(p=>p.category!==catName);
+  localStorage.setItem("categories", JSON.stringify(categories));
+  localStorage.setItem("products", JSON.stringify(products));
+  displayCategories(); displayProducts();
+  showToast("Category deleted","info");
+}
+
+/* ---------------- PRODUCT ---------------- */
+function addProduct(){
+  const name = document.getElementById("prodName").value.trim();
+  const desc = document.getElementById("prodDesc").value.trim();
+  const price = parseFloat(document.getElementById("prodPrice").value);
+  const file = document.getElementById("prodImg").files[0];
+  const gauges = document.getElementById("prodGauges").value.split(",").map(s=>s.trim());
+  const categoryIndex = document.getElementById("prodCategory").value;
+  if(!name||!desc||!price||!file){ return showToast("Fill all product fields","error"); }
+
+  const reader = new FileReader();
+  reader.onload = e=>{
+    products.push({
+      id: "p"+Date.now(),
+      name, desc, price,
+      category: categories[categoryIndex].name,
+      gauges, img:e.target.result
+    });
+    localStorage.setItem("products", JSON.stringify(products));
+    displayProducts(); showToast("Product added","success");
+    document.getElementById("prodName").value="";
+    document.getElementById("prodDesc").value="";
+    document.getElementById("prodPrice").value="";
+    document.getElementById("prodImg").value="";
+    document.getElementById("prodGauges").value="";
+  };
+  reader.readAsDataURL(file);
+}
+
+function displayProducts(){
+  const list = document.getElementById("productList");
+  list.innerHTML = "";
+  products.forEach((p,i)=>{
+    const div = document.createElement("div");
+    div.className="product-card";
+    div.innerHTML=`
+      <img src="${p.img}" style="width:100%;height:120px;object-fit:cover;">
+      <strong>${p.name}</strong><br>
+      <small>${p.category}</small><br>
+      KES ${p.price}<br><br>
+      ${p.desc.substring(0,100)}...<br>
+      Gauges: ${p.gauges.join(", ") || "None"}<br><br>
+      <button class="small-btn edit-btn" onclick="editProduct(${i})">Edit</button>
+      <button class="small-btn del-btn" onclick="deleteProduct(${i})">Delete</button>
+    `;
+    list.appendChild(div);
+  });
+}
+
+function editProduct(i){
+  const p = products[i];
+  const n = prompt("Name:", p.name);
+  if(!n) return;
+  const d = prompt("Description:", p.desc);
+  if(!d) return;
+  const pr = prompt("Price:", p.price);
+  if(!pr) return;
+  const g = prompt("Gauges (comma-separated):", p.gauges.join(","));
+  products[i]={...p, name:n, desc:d, price:parseFloat(pr), gauges:g?g.split(",").map(s=>s.trim()):[]};
+  localStorage.setItem("products", JSON.stringify(products));
+  displayProducts(); showToast("Product updated","info");
+}
+
+function deleteProduct(i){
+  products.splice(i,1);
+  localStorage.setItem("products", JSON.stringify(products));
+  displayProducts();
+  showToast("Product deleted","info");
+}
+
+/* ---------------- INIT ---------------- */
+window.onload = ()=>{
+  displayCategories();
+  displayProducts();
+};
 </script>
+
 </body>
 </html>
