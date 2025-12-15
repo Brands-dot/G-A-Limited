@@ -1,191 +1,136 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>G&A Limited - Owner Dashboard</title>
-
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Roboto:wght@400&display=swap" rel="stylesheet">
-
 <style>
-body{
-  font-family:'Roboto',sans-serif;
-  background:#1f1f1f;
-  color:#f4f4f9;
-  padding:20px;
-  margin:0;
-}
-h2,h3{
-  font-family:'Playfair Display', serif;
-  text-align:center;
-  margin-bottom:20px;
-}
+body{ font-family:'Roboto',sans-serif; background:#1f1f1f; color:#f4f4f9; padding:20px; margin:0; }
+h2,h3{ font-family:'Playfair Display', serif; text-align:center; margin-bottom:20px; }
 .container{ max-width:1000px; margin:auto; }
-
-button{
-  background:#ff9800;
-  color:#fff;
-  border:none;
-  padding:14px 25px;
-  border-radius:10px;
-  font-weight:bold;
-  cursor:pointer;
-}
-
-.small-btn{
-  padding:8px 10px;
-  margin:5px;
-  border-radius:6px;
-  font-weight:bold;
-}
-.del-btn{ background:#d63031; color:#fff; }
-.mark-btn{ background:#4caf50; color:#fff; }
-
-.order-list{
-  display:flex;
-  flex-wrap:wrap;
-  gap:15px;
-  justify-content:center;
-}
-
-.order-card{
-  background:#2c2c2c;
-  padding:15px;
-  border-radius:10px;
-  width:260px;
-}
-
-.logout{
-  float:right;
-  background:#222;
-  padding:10px 15px;
-  border-radius:5px;
-  cursor:pointer;
-}
-
+input,textarea,select{ width:100%; padding:12px; margin-bottom:15px; background:#333; border:1px solid #555; border-radius:6px; color:#fff; }
+button{ background:#ff9800; color:#fff; border:none; padding:14px 25px; border-radius:10px; font-weight:bold; cursor:pointer; }
+.logout{ float:right; background:#222; padding:10px 15px; border-radius:5px; cursor:pointer; }
+.category-list,.product-list,.order-list{ display:flex; flex-wrap:wrap; gap:15px; justify-content:center; }
+.category-card,.product-card,.order-card{ background:#2c2c2c; padding:15px; border-radius:10px; width:260px; }
 /* Toast */
-#toastContainer{
-  position:fixed;
-  top:20px;
-  right:20px;
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-  z-index:9999;
-}
-.toast{
-  background:#333;
-  padding:15px 20px;
-  border-radius:10px;
-  min-width:280px;
-  box-shadow:0 10px 30px rgba(0,0,0,.4);
-  animation:slideIn .3s ease;
-}
+#toastContainer{ position:fixed; top:20px; right:20px; display:flex; flex-direction:column; gap:10px; z-index:9999; }
+.toast{ background:#333; padding:15px 20px; border-radius:10px; min-width:280px; box-shadow:0 10px 30px rgba(0,0,0,.4); animation:slideIn .3s ease; }
 .toast.success{ background:#4caf50; }
 .toast.error{ background:#d63031; }
 .toast.info{ background:#2196f3; }
-
-@keyframes slideIn{
-  from{ opacity:0; transform:translateY(-10px); }
-  to{ opacity:1; transform:translateY(0); }
-}
+@keyframes slideIn{ from{ opacity:0; transform:translateY(-10px); } to{ opacity:1; transform:translateY(0); } }
 </style>
 </head>
-
 <body>
 
 <div class="container">
-  <h2>Owner Dashboard</h2>
-  <button class="logout" onclick="logout()">Logout</button>
+<h2>Owner Dashboard</h2>
+<button class="logout" onclick="logout()">Logout</button>
 
-  <h3>Customer Orders</h3>
-  <div class="order-list" id="orderList"></div>
+<h3>Add Category</h3>
+<input type="text" id="catName" placeholder="Category Name">
+<input type="file" id="catImg" accept="image/*">
+<button onclick="addCategory()">Add Category</button>
+<div class="category-list" id="categoryList"></div>
+
+<h3>Add Product</h3>
+<select id="prodCategory"></select>
+<input type="text" id="prodName" placeholder="Product Name">
+<textarea id="prodDesc" placeholder="Product Description"></textarea>
+<input type="number" id="prodPrice" placeholder="Price">
+<input type="file" id="prodImg" accept="image/*">
+<button onclick="addProduct()">Add Product</button>
+<div class="product-list" id="productList"></div>
 </div>
 
 <div id="toastContainer"></div>
 
 <script type="module">
-import { auth, db } from './firebase.js';
+import { auth, db, storage } from './firebase.js';
+import { collection, addDoc, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
 import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-import { collection, getDocs, deleteDoc, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
-// ---------------- AUTH ----------------
-onAuthStateChanged(auth, user => {
-  if (!user) window.location.href = 'owner-login.html';
-});
+// Redirect if not logged in
+if(localStorage.getItem('ownerLoggedIn')!=='true'){
+  location.href='owner-login.html';
+}
 
-// ---------------- TOAST ----------------
-function showToast(msg, type="info") {
-  const t = document.createElement('div');
-  t.className = `toast ${type}`;
-  t.textContent = msg;
+// Toast
+function showToast(msg,type='info'){
+  const t=document.createElement('div'); t.className=`toast ${type}`; t.textContent=msg;
   document.getElementById('toastContainer').appendChild(t);
-  setTimeout(() => t.remove(), 3000);
+  setTimeout(()=>t.remove(),3000);
 }
 
-// ---------------- ORDERS ----------------
-const orderList = document.getElementById('orderList');
+// Load categories
+async function loadCategories(){
+  const catSel = document.getElementById('prodCategory');
+  catSel.innerHTML='';
+  const catList = document.getElementById('categoryList');
+  catList.innerHTML='';
 
-async function displayOrders() {
-  orderList.innerHTML = "";
-  const ordersSnap = await getDocs(collection(db, "orders"));
-  if (ordersSnap.empty) {
-    orderList.innerHTML = "<p>No orders yet.</p>";
-    return;
-  }
-
-  ordersSnap.forEach(docSnap => {
-    const o = docSnap.data();
-    const id = docSnap.id;
-
-    const card = document.createElement('div');
-    card.className = 'order-card';
-
-    let itemsHTML = "";
-    o.items?.forEach(it => itemsHTML += `
-      <b>${it.name}</b><br>
-      Qty: ${it.quantity}<br>
-      Total: KES ${it.price*it.quantity}<hr>
-    `);
-
-    card.innerHTML = `
-      ${itemsHTML}
-      <b>Customer:</b><br>
-      ${o.customer?.name || "N/A"}<br>
-      ${o.customer?.phone || "N/A"}<br>
-      ${o.customer?.email || "N/A"}<br><br>
-      <button class="small-btn del-btn" onclick="deleteOrder('${id}')">Delete</button>
-      <button class="small-btn mark-btn" onclick="toggleCompleted('${id}', ${o.completed})">
-        ${o.completed ? "Completed ✓" : "Mark Completed"}
-      </button>
-    `;
-    orderList.appendChild(card);
+  const snapshot = await getDocs(collection(db,'categories'));
+  snapshot.forEach(doc=>{
+    const cat = doc.data();
+    // dropdown
+    const opt = document.createElement('option'); opt.value = doc.id; opt.textContent = cat.name;
+    catSel.appendChild(opt);
+    // list
+    const div = document.createElement('div'); div.className='category-card';
+    div.innerHTML=`<strong>${cat.name}</strong>`;
+    catList.appendChild(div);
   });
 }
 
-async function deleteOrder(id) {
-  await deleteDoc(doc(db, "orders", id));
-  showToast("Order deleted", "success");
-  displayOrders();
+// Add category
+async function addCategory(){
+  const name = document.getElementById('catName').value.trim();
+  const file = document.getElementById('catImg').files[0];
+  if(!name || !file) return showToast('Fill all fields','error');
+
+  const imgRef = ref(storage, `categories/${file.name}`);
+  await uploadBytes(imgRef,file);
+  const url = await getDownloadURL(imgRef);
+
+  await addDoc(collection(db,'categories'),{name,img:url});
+  document.getElementById('catName').value=''; document.getElementById('catImg').value='';
+  showToast('Category added','success');
+  loadCategories();
 }
 
-async function toggleCompleted(id, current) {
-  await updateDoc(doc(db, "orders", id), { completed: !current });
-  showToast("Order updated", "info");
-  displayOrders();
-}
+// Add product
+async function addProduct(){
+  const name = document.getElementById('prodName').value.trim();
+  const desc = document.getElementById('prodDesc').value.trim();
+  const price = parseFloat(document.getElementById('prodPrice').value);
+  const file = document.getElementById('prodImg').files[0];
+  const catId = document.getElementById('prodCategory').value;
 
-// ---------------- LOGOUT ----------------
-function logout() {
-  signOut(auth).then(() => {
-    localStorage.removeItem('ownerLoggedIn');
-    window.location.href = 'owner-login.html';
+  if(!name||!desc||!price||!file||!catId) return showToast('Fill all fields','error');
+
+  const imgRef = ref(storage, `products/${file.name}`);
+  await uploadBytes(imgRef,file);
+  const url = await getDownloadURL(imgRef);
+
+  await addDoc(collection(db,'products'),{
+    name,desc,price,img:url,categoryId:catId
   });
+
+  document.getElementById('prodName').value=''; document.getElementById('prodDesc').value=''; 
+  document.getElementById('prodPrice').value=''; document.getElementById('prodImg').value='';
+
+  showToast('Product added','success');
 }
 
-// Initial load
-displayOrders();
+loadCategories();
+
+function logout(){
+  localStorage.removeItem('ownerLoggedIn');
+  signOut(auth).then(()=>location.href='owner-login.html');
+}
 </script>
-
 </body>
 </html>
