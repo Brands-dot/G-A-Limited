@@ -63,7 +63,6 @@ button:hover { background:#e68900; }
 </head>
 <body>
 
-<!-- NOTIFICATION SOUND -->
 <audio id="notifySound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
 
 <div class="container">
@@ -91,41 +90,34 @@ button:hover { background:#e68900; }
   <div id="orderList" class="order-list"></div>
 </div>
 
-<!-- Toast container -->
 <div id="toastContainer"></div>
 
 <script>
-/* ---------------- SECURITY ---------------- */
-if (localStorage.getItem("ownerLoggedIn") !== "true") {
-  window.location.href = "owner-login.html";
-}
+if (localStorage.getItem("ownerLoggedIn") !== "true") window.location.href = "owner-login.html";
 
-/* ---------------- LOAD DATA ---------------- */
 let categories = JSON.parse(localStorage.getItem("categories")) || [];
 let products = JSON.parse(localStorage.getItem("products")) || [];
 let orders = JSON.parse(localStorage.getItem("orders")) || [];
 let lastOrderCount = orders.length;
 
-/* ---------------- TOAST ---------------- */
-function showToast(msg, type='info', duration=3000){
+const categoryList = document.getElementById("categoryList");
+const productList = document.getElementById("productList") || document.createElement("div");
+const prodCategory = document.getElementById("prodCategory");
+const orderList = document.getElementById("orderList");
+
+function showToast(msg,type='info',duration=3000){
   const container=document.getElementById('toastContainer');
   const toast=document.createElement('div');
   toast.className=`toast ${type} show`;
   toast.textContent=msg;
   container.appendChild(toast);
-  setTimeout(()=>{
-    toast.style.opacity='0';
-    toast.style.transform='translateY(-20px)';
-    setTimeout(()=>toast.remove(),300);
-  },duration);
+  setTimeout(()=>{ toast.style.opacity='0'; toast.style.transform='translateY(-20px)'; setTimeout(()=>toast.remove(),300); },duration);
 }
 
-/* ---------------- SAVE HELPERS ---------------- */
 function saveCategories(){ localStorage.setItem("categories", JSON.stringify(categories)); }
 function saveProducts(){ localStorage.setItem("products", JSON.stringify(products)); }
 function saveOrders(){ localStorage.setItem("orders", JSON.stringify(orders)); }
 
-/* ---------------- CATEGORY ---------------- */
 function addCategory() {
   const name = catName.value.trim();
   const file = catImg.files[0];
@@ -179,7 +171,6 @@ function deleteCategory(i){
   showToast("Category deleted","info");
 }
 
-/* ---------------- PRODUCT ---------------- */
 function addProduct(){
   const name = prodName.value.trim();
   const desc = prodDesc.value.trim();
@@ -193,7 +184,7 @@ function addProduct(){
   reader.onload = e=>{
     products.push({
       id:"p"+Date.now(), name, desc, price, img:e.target.result,
-      gauges, category:categories[prodCategory.value].name
+      gauges, category:categories[prodCategory.value]?.name||"Uncategorized"
     });
     saveProducts(); displayProducts();
     prodName.value=''; prodDesc.value=''; prodPrice.value=''; prodGauges.value=''; prodImg.value='';
@@ -233,7 +224,6 @@ function deleteProduct(i){
   showToast("Product deleted","info");
 }
 
-/* ---------------- ORDERS ---------------- */
 function displayOrders(){
   orders=JSON.parse(localStorage.getItem("orders"))||[];
   if(orders.length>lastOrderCount){ playNotification(); flashScreen(); showToast(`${orders.length-lastOrderCount} new order(s) received!`,"success"); }
@@ -271,25 +261,14 @@ function displayOrders(){
   });
 }
 
-function deleteOrder(i){
-  orders.splice(i,1); saveOrders(); displayOrders(); showToast("Order deleted","info");
-}
-
-function toggleCompleted(i){
-  orders[i].completed=!orders[i].completed; saveOrders(); displayOrders(); showToast("Order status updated","info");
-}
-
-/* ---------------- NOTIFICATIONS ---------------- */
+function deleteOrder(i){ orders.splice(i,1); saveOrders(); displayOrders(); showToast("Order deleted","info"); }
+function toggleCompleted(i){ orders[i].completed=!orders[i].completed; saveOrders(); displayOrders(); showToast("Order status updated","info"); }
 function playNotification(){ document.getElementById("notifySound").play().catch(()=>{}); }
 function flashScreen(){ document.body.classList.add("flash"); setTimeout(()=>document.body.classList.remove("flash"),3000); }
-
-/* ---------------- LOGOUT ---------------- */
 function logout(){ localStorage.removeItem("ownerLoggedIn"); window.location.href="owner-login.html"; }
 
-/* ---------------- AUTO REFRESH ---------------- */
 setInterval(displayOrders,5000);
 
-/* ---------------- INITIAL LOAD ---------------- */
 window.onload=()=>{
   displayCategories(); populateCategorySelect(); displayProducts(); displayOrders();
 };
