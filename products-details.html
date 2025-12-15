@@ -14,10 +14,18 @@
   h2 { font-family:'Playfair Display', serif; margin-bottom:15px; }
   p { margin-bottom:10px; color:#555; }
   label { display:block; margin:10px 0 5px; }
-  select,input { width:100%; padding:10px; border-radius:5px; border:1px solid #ccc; }
+  select,input { width:100%; padding:10px; border-radius:5px; border:1px solid #ccc; margin-bottom:15px; }
   .price { font-weight:bold; font-size:1.2rem; margin-bottom:15px; }
   .btn { display:inline-block; padding:12px 25px; background:#ff9800; color:#fff; border-radius:8px; text-decoration:none; font-weight:bold; transition:0.3s; cursor:pointer; }
   .btn:hover { background:#e68900; }
+
+  /* Toast styles */
+  #toastContainer { position:fixed; top:20px; right:20px; z-index:9999; display:flex; flex-direction:column; gap:10px; }
+  .toast { padding:15px 20px; border-radius:10px; color:#fff; font-weight:bold; opacity:0; transform:translateY(-20px); transition:0.3s; }
+  .toast.show { opacity:1; transform:translateY(0); }
+  .toast.success { background:#4caf50; }
+  .toast.error { background:#d63031; }
+  .toast.info { background:#2196f3; }
 </style>
 </head>
 <body>
@@ -27,6 +35,9 @@
 <div class="container" id="productContainer">
   <!-- Product details populated by JS -->
 </div>
+
+<!-- Toast container -->
+<div id="toastContainer"></div>
 
 <script>
   const products = [
@@ -58,8 +69,35 @@
     <label>Quantity:
       <input type="number" id="qtyInput" value="1" min="1">
     </label>
-    <a class="btn" href="#">Add to Cart / Order</a>
+    <button class="btn" id="addCartBtn">Add to Cart / Order</button>
   `;
+
+  // Toast function
+  function showToast(message,type='info',duration=3000){
+    const container=document.getElementById('toastContainer');
+    const toast=document.createElement('div');
+    toast.className=`toast ${type} show`;
+    toast.textContent=message;
+    container.appendChild(toast);
+    setTimeout(()=>{ toast.style.opacity='0'; toast.style.transform='translateY(-20px)'; setTimeout(()=>toast.remove(),300); },duration);
+  }
+
+  // Add to Cart
+  document.getElementById('addCartBtn').addEventListener('click',()=>{
+    const qty = parseInt(document.getElementById('qtyInput').value);
+    const gauge = product.gauges.length ? document.getElementById('gaugeSelect').value : null;
+    if(qty<1){ showToast('Quantity must be at least 1','error'); return; }
+
+    let cart = JSON.parse(localStorage.getItem('cart')) || [];
+    const existingIndex = cart.findIndex(item=>item.name===product.name && item.gauge===gauge);
+    if(existingIndex>-1){
+      cart[existingIndex].quantity += qty;
+    } else {
+      cart.push({ name: product.name, category: product.category, price: product.price, gauge, quantity: qty });
+    }
+    localStorage.setItem('cart',JSON.stringify(cart));
+    showToast('Product added to cart','success');
+  });
 </script>
 
 </body>

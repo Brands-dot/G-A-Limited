@@ -26,6 +26,7 @@ tr:nth-child(even){background:#f9f9f9;}
 .checkout-form label{font-weight:bold;}
 footer{background:#222;color:#fff;text-align:center;padding:25px;margin-top:auto;}
 @media(max-width:768px){table, th, td{font-size:0.9rem;}th, td{padding:8px;}.checkout-form input, .checkout-form select, .checkout-form textarea{padding:10px;font-size:0.9rem;}}
+
 /* Toast styles */
 #toastContainer{position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:10px;}
 .toast{min-width:250px;max-width:350px;padding:15px 20px;border-radius:8px;color:#fff;font-weight:500;box-shadow:0 5px 15px rgba(0,0,0,0.2);animation:slideIn 0.5s, fadeOut 0.5s 3.5s forwards;opacity:0;}
@@ -41,7 +42,22 @@ footer{background:#222;color:#fff;text-align:center;padding:25px;margin-top:auto
 <header>
   <div class="logo">G&A Limited</div>
   <nav>
-    <a href="products.html">Back to Products</a>
+    <a href="index.html">Home</a>
+    <a href="products.html">Products</a>
+    <a href="cart.html" style="position:relative;">
+      Cart 
+      <span id="cartCount" style="
+        position:absolute;
+        top:-8px;
+        right:-10px;
+        background:#ff9800;
+        color:#fff;
+        font-size:0.8rem;
+        padding:2px 6px;
+        border-radius:50%;
+        font-weight:bold;
+      ">0</span>
+    </a>
   </nav>
 </header>
 
@@ -94,10 +110,13 @@ footer{background:#222;color:#fff;text-align:center;padding:25px;margin-top:auto
 <div id="toastContainer"></div>
 
 <script>
-const cartTableBody=document.querySelector('#cartTable tbody');
-const grandTotalEl=document.getElementById('grandTotal');
-let cart=JSON.parse(localStorage.getItem('cart'))||[];
+let cart = JSON.parse(localStorage.getItem('cart')) || [];
+const cartTableBody = document.querySelector('#cartTable tbody');
+const grandTotalEl = document.getElementById('grandTotal');
+const checkoutBtn = document.getElementById('checkoutBtn');
+const checkoutSection = document.getElementById('checkoutSection');
 
+// Toast
 function showToast(message,type='info',duration=4000){
   const container=document.getElementById('toastContainer');
   const toast=document.createElement('div');
@@ -108,14 +127,15 @@ function showToast(message,type='info',duration=4000){
   setTimeout(()=>{ toast.remove(); },duration);
 }
 
+// Render cart
 function renderCart(){
   cartTableBody.innerHTML='';
   let grandTotal=0;
   cart.forEach((item,index)=>{
-    const total=item.price*item.quantity;
-    grandTotal+=total;
-    const tr=document.createElement('tr');
-    tr.innerHTML=`
+    const total = item.price * item.quantity;
+    grandTotal += total;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
       <td>${item.name}</td>
       <td>${item.gauge||'None'}</td>
       <td><input type="number" value="${item.quantity}" min="1" style="width:60px;" onchange="updateQty(${index},this.value)"></td>
@@ -125,52 +145,86 @@ function renderCart(){
     `;
     cartTableBody.appendChild(tr);
   });
-  grandTotalEl.textContent=`Grand Total: KES ${grandTotal}`;
+  grandTotalEl.textContent = `Grand Total: KES ${grandTotal}`;
+  localStorage.setItem('cart', JSON.stringify(cart));
 }
 
+// Update quantity
 function updateQty(index,value){
-  cart[index].quantity=parseInt(value);
-  localStorage.setItem('cart',JSON.stringify(cart));
+  const qty = parseInt(value);
+  if(qty < 1) return;
+  cart[index].quantity = qty;
   renderCart();
 }
 
+// Remove item
 function removeItem(index){
   cart.splice(index,1);
-  localStorage.setItem('cart',JSON.stringify(cart));
   renderCart();
-  showToast('Item removed from cart', 'info');
+  showToast('Item removed from cart','info');
 }
 
 // Checkout
-const checkoutBtn=document.getElementById('checkoutBtn');
-const checkoutSection=document.getElementById('checkoutSection');
-checkoutBtn.onclick=()=>{
-  if(cart.length===0){ showToast('Cart is empty!', 'error'); return; }
+checkoutBtn.onclick = ()=>{
+  if(cart.length===0){ showToast('Cart is empty!','error'); return; }
   checkoutSection.style.display='block';
   window.scrollTo({top:0,behavior:'smooth'});
 };
 
-document.getElementById('placeOrderBtn').onclick=()=>{
-  const name=document.getElementById('custName').value.trim();
-  const phone=document.getElementById('custPhone').value.trim();
-  const email=document.getElementById('custEmail').value.trim();
-  const address=document.getElementById('custAddress').value.trim();
-  const payment=document.getElementById('paymentMethod').value;
+// Place order
+document.getElementById('placeOrderBtn').onclick = ()=>{
+  const name = document.getElementById('custName').value.trim();
+  const phone = document.getElementById('custPhone').value.trim();
+  const email = document.getElementById('custEmail').value.trim();
+  const address = document.getElementById('custAddress').value.trim();
+  const payment = document.getElementById('paymentMethod').value;
 
-  if(!name||!phone||!email||!address){ showToast('Please fill all details', 'error'); return; }
+  if(!name || !phone || !email || !address){
+    showToast('Please fill all customer details','error');
+    return;
+  }
 
-  const order={customer:{name,phone,email,location:address,payment}, items:cart, total:cart.reduce((a,b)=>a+b.price*b.quantity,0), time:new Date().toLocaleString(), completed:false};
-  const orders=JSON.parse(localStorage.getItem('orders'))||[];
+  const order = {
+    customer: { name, phone, email, address, payment },
+    items: cart,
+    total: cart.reduce((sum,item)=>sum + item.price*item.quantity,0),
+    time: new Date().toLocaleString(),
+    completed: false
+  };
+
+  const orders = JSON.parse(localStorage.getItem('orders')) || [];
   orders.push(order);
-  localStorage.setItem('orders',JSON.stringify(orders));
+  localStorage.setItem('orders', JSON.stringify(orders));
 
-  showToast('Order placed successfully!', 'success');
-  cart=[]; localStorage.setItem('cart',JSON.stringify(cart));
+  showToast('Order placed successfully!','success');
+  cart = [];
   renderCart();
   checkoutSection.style.display='none';
 };
 
 renderCart();
+
+// Function to update cart count in header
+function updateCartCount(){
+  const cart = JSON.parse(localStorage.getItem('cart')) || [];
+  const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const cartEl = document.getElementById('cartCount');
+  if(cartEl) cartEl.textContent = cartCount;
+}
+
+// Call on page load
+updateCartCount();
+
+// Optional: also call after cart changes
+function addToCart(item){
+  let cart = JSON.parse(localStorage.getItem('cart')) || [];
+  cart.push(item);
+  localStorage.setItem('cart', JSON.stringify(cart));
+  updateCartCount();
+}
+
+// If you use quantity changes/removals, call updateCartCount() there too
+
 </script>
 </body>
 </html>

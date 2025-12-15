@@ -9,7 +9,6 @@
 <style>
 body { font-family:'Roboto',sans-serif; background:#2c2c2c; color:#f4f4f9; padding:20px; margin:0; }
 h2,h3 { font-family:'Playfair Display', serif; text-align:center; margin-bottom:20px; }
-
 .container { max-width:900px; margin:0 auto; }
 input, textarea, select {
   display:block; width:100%; padding:12px; margin-bottom:15px;
@@ -86,6 +85,9 @@ button:hover { background:#e68900; }
   <input type="text" id="prodGauges" placeholder="Gauges (comma-separated)">
   <button onclick="addProduct()">Add Product</button>
 
+  <h3>Products</h3>
+  <div id="productList" class="product-list"></div>
+
   <h3>Customer Orders</h3>
   <div id="orderList" class="order-list"></div>
 </div>
@@ -93,15 +95,15 @@ button:hover { background:#e68900; }
 <div id="toastContainer"></div>
 
 <script>
-if (localStorage.getItem("ownerLoggedIn") !== "true") window.location.href = "owner-login.html";
+if(localStorage.getItem("ownerLoggedIn")!=="true") window.location.href="owner-login.html";
 
-let categories = JSON.parse(localStorage.getItem("categories")) || [];
-let products = JSON.parse(localStorage.getItem("products")) || [];
-let orders = JSON.parse(localStorage.getItem("orders")) || [];
+let categories = JSON.parse(localStorage.getItem("categories"))||[];
+let products = JSON.parse(localStorage.getItem("products"))||[];
+let orders = JSON.parse(localStorage.getItem("orders"))||[];
 let lastOrderCount = orders.length;
 
 const categoryList = document.getElementById("categoryList");
-const productList = document.getElementById("productList") || document.createElement("div");
+const productList = document.getElementById("productList");
 const prodCategory = document.getElementById("prodCategory");
 const orderList = document.getElementById("orderList");
 
@@ -118,11 +120,11 @@ function saveCategories(){ localStorage.setItem("categories", JSON.stringify(cat
 function saveProducts(){ localStorage.setItem("products", JSON.stringify(products)); }
 function saveOrders(){ localStorage.setItem("orders", JSON.stringify(orders)); }
 
-function addCategory() {
+// Category Functions
+function addCategory(){
   const name = catName.value.trim();
   const file = catImg.files[0];
-  if (!name || !file) return showToast("Fill all category fields","error");
-
+  if(!name||!file) return showToast("Fill all category fields","error");
   const reader = new FileReader();
   reader.onload = e => {
     categories.push({ name, img: e.target.result });
@@ -132,11 +134,10 @@ function addCategory() {
   };
   reader.readAsDataURL(file);
 }
-
-function displayCategories() {
-  categoryList.innerHTML = "";
-  categories.forEach((c, i) => {
-    categoryList.innerHTML += `
+function displayCategories(){
+  categoryList.innerHTML="";
+  categories.forEach((c,i)=>{
+    categoryList.innerHTML+=`
       <div class="category-card">
         <img src="${c.img}" style="width:100%;height:120px;object-fit:cover;">
         <strong>${c.name}</strong><br><br>
@@ -145,43 +146,39 @@ function displayCategories() {
       </div>`;
   });
 }
-
-function populateCategorySelect() {
-  prodCategory.innerHTML = "";
-  categories.forEach((c,i)=>prodCategory.innerHTML += `<option value="${i}">${c.name}</option>`);
+function populateCategorySelect(){
+  prodCategory.innerHTML="";
+  categories.forEach((c,i)=>prodCategory.innerHTML+=`<option value="${i}">${c.name}</option>`);
 }
-
 function editCategory(i){
-  const newName=prompt("New name:",categories[i].name);
+  const newName = prompt("New name:", categories[i].name);
   if(!newName) return;
   const oldName = categories[i].name;
   categories[i].name = newName;
-  products.forEach(p=>{if(p.category===oldName)p.category=newName});
+  products.forEach(p=>{ if(p.category===oldName) p.category=newName });
   saveCategories(); saveProducts();
   displayCategories(); populateCategorySelect(); displayProducts();
   showToast("Category updated","info");
 }
-
 function deleteCategory(i){
-  const catName=categories[i].name;
+  const catName = categories[i].name;
   categories.splice(i,1);
-  products=products.filter(p=>p.category!==catName);
+  products = products.filter(p=>p.category!==catName);
   saveCategories(); saveProducts();
   displayCategories(); populateCategorySelect(); displayProducts();
   showToast("Category deleted","info");
 }
 
+// Product Functions
 function addProduct(){
   const name = prodName.value.trim();
   const desc = prodDesc.value.trim();
   const price = parseFloat(prodPrice.value);
   const file = prodImg.files[0];
   const gauges = prodGauges.value ? prodGauges.value.split(",").map(s=>s.trim()) : [];
-
   if(!name||!desc||!price||!file) return showToast("Fill all product fields","error");
-
   const reader = new FileReader();
-  reader.onload = e=>{
+  reader.onload = e => {
     products.push({
       id:"p"+Date.now(), name, desc, price, img:e.target.result,
       gauges, category:categories[prodCategory.value]?.name||"Uncategorized"
@@ -192,23 +189,23 @@ function addProduct(){
   };
   reader.readAsDataURL(file);
 }
-
 function displayProducts(){
   productList.innerHTML="";
-  products.forEach((p,i)=>productList.innerHTML += `
-    <div class="product-card">
-      <img src="${p.img}" style="width:100%;height:120px;object-fit:cover;">
-      <strong>${p.name}</strong><br>
-      <small>${p.category}</small><br>
-      KES ${p.price}<br><br>
-      ${p.desc.substring(0,100)}...
-      <br><br>
-      Gauges: ${p.gauges.join(", ") || "None"}<br><br>
-      <button class="small-btn edit-btn" onclick="editProduct(${i})">Edit</button>
-      <button class="small-btn del-btn" onclick="deleteProduct(${i})">Delete</button>
-    </div>`);
+  products.forEach((p,i)=>{
+    productList.innerHTML+=`
+      <div class="product-card">
+        <img src="${p.img}" style="width:100%;height:120px;object-fit:cover;">
+        <strong>${p.name}</strong><br>
+        <small>${p.category}</small><br>
+        KES ${p.price}<br><br>
+        ${p.desc.substring(0,100)}...
+        <br><br>
+        Gauges: ${p.gauges.join(", ")||"None"}<br><br>
+        <button class="small-btn edit-btn" onclick="editProduct(${i})">Edit</button>
+        <button class="small-btn del-btn" onclick="deleteProduct(${i})">Delete</button>
+      </div>`;
+  });
 }
-
 function editProduct(i){
   const p=products[i];
   const n=prompt("Name:",p.name); if(!n) return;
@@ -218,16 +215,16 @@ function editProduct(i){
   products[i]={...p,name:n,desc:d,price:parseFloat(pr),gauges:g?g.split(",").map(s=>s.trim()):[]};
   saveProducts(); displayProducts(); showToast("Product updated","info");
 }
+function deleteProduct(i){ products.splice(i,1); saveProducts(); displayProducts(); showToast("Product deleted","info"); }
 
-function deleteProduct(i){
-  products.splice(i,1); saveProducts(); displayProducts();
-  showToast("Product deleted","info");
-}
-
+// Orders
 function displayOrders(){
   orders=JSON.parse(localStorage.getItem("orders"))||[];
-  if(orders.length>lastOrderCount){ playNotification(); flashScreen(); showToast(`${orders.length-lastOrderCount} new order(s) received!`,"success"); }
-  lastOrderCount=orders.length;
+  if(orders.length>lastOrderCount){
+    playNotification();
+    showToast(`${orders.length-lastOrderCount} new order(s) received!`,"success");
+  }
+  lastOrderCount = orders.length;
 
   orderList.innerHTML="";
   if(orders.length===0){ orderList.innerHTML="<p>No orders yet.</p>"; return; }
@@ -235,8 +232,6 @@ function displayOrders(){
   orders.slice().reverse().forEach((o,revIndex)=>{
     const idx=orders.length-1-revIndex;
     const card=document.createElement('div'); card.className='order-card';
-    if(o.new){ card.classList.add('new-order'); delete o.new; saveOrders(); }
-
     let itemsHTML="";
     o.items?.forEach(it=>itemsHTML+=`
       <strong>Product:</strong> ${it.name}<br>
@@ -246,7 +241,6 @@ function displayOrders(){
       <strong>Price:</strong> KES ${it.price}<br>
       <strong>Total:</strong> KES ${it.price*it.quantity}<br><hr>
     `);
-
     card.innerHTML=itemsHTML+`
       <strong>Date:</strong> ${o.time||new Date().toLocaleString()}<br><br>
       <strong>Customer:</strong><br>
@@ -260,11 +254,9 @@ function displayOrders(){
     orderList.appendChild(card);
   });
 }
-
 function deleteOrder(i){ orders.splice(i,1); saveOrders(); displayOrders(); showToast("Order deleted","info"); }
 function toggleCompleted(i){ orders[i].completed=!orders[i].completed; saveOrders(); displayOrders(); showToast("Order status updated","info"); }
 function playNotification(){ document.getElementById("notifySound").play().catch(()=>{}); }
-function flashScreen(){ document.body.classList.add("flash"); setTimeout(()=>document.body.classList.remove("flash"),3000); }
 function logout(){ localStorage.removeItem("ownerLoggedIn"); window.location.href="owner-login.html"; }
 
 setInterval(displayOrders,5000);
