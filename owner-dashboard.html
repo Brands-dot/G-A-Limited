@@ -1,288 +1,269 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>G&A Limited - Owner Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Roboto:wght@400&display=swap" rel="stylesheet">
 <style>
-body{ font-family:'Roboto',sans-serif; background:#1f1f1f; color:#f4f4f9; padding:20px; margin:0; }
-h2,h3{ font-family:'Playfair Display', serif; text-align:center; margin-bottom:20px; }
-.container{ max-width:1000px; margin:auto; }
-input,textarea,select{ width:100%; padding:12px; margin-bottom:15px; background:#333; border:1px solid #555; border-radius:6px; color:#fff; }
-button{ background:#ff9800; color:#fff; border:none; padding:14px 25px; border-radius:10px; font-weight:bold; cursor:pointer; }
-.logout{ float:right; background:#222; padding:10px 15px; border-radius:5px; cursor:pointer; }
-.category-list,.product-list,.order-list{ display:flex; flex-wrap:wrap; gap:15px; justify-content:center; }
-.category-card,.product-card,.order-card{ background:#2c2c2c; padding:15px; border-radius:10px; width:260px; }
-/* Toast */
-#toastContainer{ position:fixed; top:20px; right:20px; display:flex; flex-direction:column; gap:10px; z-index:9999; }
-.toast{ background:#333; padding:15px 20px; border-radius:10px; min-width:280px; box-shadow:0 10px 30px rgba(0,0,0,.4); animation:slideIn .3s ease; }
-.toast.success{ background:#4caf50; }
-.toast.error{ background:#d63031; }
-.toast.info{ background:#2196f3; }
-@keyframes slideIn{ from{ opacity:0; transform:translateY(-10px); } to{ opacity:1; transform:translateY(0); } }
+body { font-family:'Roboto',sans-serif; background:#2c2c2c; color:#f4f4f9; padding:20px; margin:0; }
+h2,h3 { font-family:'Playfair Display', serif; text-align:center; margin-bottom:20px; }
+.container { max-width:900px; margin:0 auto; }
+input, textarea, select {
+  display:block; width:100%; padding:12px; margin-bottom:15px;
+  border-radius:6px; border:1px solid #555; background:#444; color:#fff;
+}
+textarea { resize:vertical; }
+button { padding:14px 25px; background:#ff9800; color:#fff;
+  border:none; border-radius:10px; font-weight:bold; cursor:pointer; transition:0.3s; }
+button:hover { background:#e68900; }
+
+.category-list, .product-list, .order-list {
+  display:flex; flex-wrap:wrap; gap:15px; justify-content:center;
+}
+
+.category-card, .product-card, .order-card {
+  background:#333; padding:15px; border-radius:10px;
+  box-shadow:0 5px 15px rgba(0,0,0,0.3); width:250px; text-align:center;
+  transition:0.3s;
+}
+.category-card:hover, .product-card:hover, .order-card:hover { transform:translateY(-5px); }
+
+.small-btn { padding:8px 10px; margin:6px; border-radius:6px; border:none; cursor:pointer; font-weight:bold; }
+.edit-btn { background:#ffaa00; color:#111; }
+.del-btn { background:#d63031; color:#fff; }
+.mark-btn { background:#4caf50; color:#fff; }
+
+.logout {
+  float:right; background:#222; color:#fff;
+  padding:10px 15px; border-radius:5px; cursor:pointer; margin-top:-60px;
+}
+.logout:hover { background:#555; }
+
+@media(max-width:768px){
+  .category-card, .product-card, .order-card { width:100%; }
+  button { width:100%; }
+  .logout { float:none; width:100%; margin-bottom:20px; }
+}
+
+/* Toast container */
+#toastContainer { position:fixed; top:20px; right:20px; z-index:9999; display:flex; flex-direction:column; gap:10px; }
+.toast { padding:15px 20px; border-radius:10px; color:#fff; font-weight:bold; opacity:0; transform:translateY(-20px); transition:0.3s; }
+.toast.show { opacity:1; transform:translateY(0); }
+.toast.success { background:#4caf50; }
+.toast.error { background:#d63031; }
+.toast.info { background:#2196f3; }
+
+/* New order highlight */
+.new-order { animation: highlightNew 2s ease-in-out; border:2px solid #4caf50; }
+@keyframes highlightNew { 0% { background:#4caf50; } 50% { background:#333; } 100% { background:#4caf50; } }
 </style>
 </head>
 <body>
 
+<audio id="notifySound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
+
 <div class="container">
-<h2>Owner Dashboard</h2>
-<button class="logout" onclick="logout()">Logout</button>
+  <h2>Owner Dashboard</h2>
+  <button class="logout" onclick="logout()">Logout</button>
 
-<h3>Add Category</h3>
-<input type="text" id="catName" placeholder="Category Name">
-<input type="file" id="catImg" accept="image/*">
-<button onclick="addCategory()">Add Category</button>
-<div class="category-list" id="categoryList"></div>
+  <h3>Add New Category</h3>
+  <input type="text" id="catName" placeholder="Category Name">
+  <input type="file" id="catImg" accept="image/*">
+  <button onclick="addCategory()">Add Category</button>
+  <div id="categoryList" class="category-list"></div>
 
-<h3>Add Product</h3>
-<select id="prodCategory"></select>
-<input type="text" id="prodName" placeholder="Product Name">
-<textarea id="prodDesc" placeholder="Product Description"></textarea>
-<input type="number" id="prodPrice" placeholder="Price">
-<input type="file" id="prodImg" accept="image/*">
-<button onclick="addProduct()">Add Product</button>
-<div class="product-list" id="productList"></div>
+  <h3>Add Product</h3>
+  <select id="prodCategory"></select>
+  <input type="text" id="prodName" placeholder="Product Name">
+  <textarea id="prodDesc" placeholder="Product Description"></textarea>
+  <input type="number" id="prodPrice" placeholder="Price">
+  <input type="file" id="prodImg" accept="image/*">
+  <input type="text" id="prodGauges" placeholder="Gauges (comma-separated)">
+  <button onclick="addProduct()">Add Product</button>
+  <div id="productList" class="product-list"></div>
+
+  <h3>Customer Orders</h3>
+  <div id="orderList" class="order-list"></div>
 </div>
 
 <div id="toastContainer"></div>
 
-<script type="module">
-import { auth, db, storage } from './firebase.js';
-import { collection, addDoc, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
-import { ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
-import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-
-// Redirect if not logged in
-if(localStorage.getItem('ownerLoggedIn')!=='true'){
-  location.href='owner-login.html';
-}
-
-// Toast
-function showToast(msg,type='info'){
-  const t=document.createElement('div'); t.className=`toast ${type}`; t.textContent=msg;
-  document.getElementById('toastContainer').appendChild(t);
-  setTimeout(()=>t.remove(),3000);
-}
-
-// Load categories
-async function loadCategories(){
-  const catSel = document.getElementById('prodCategory');
-  catSel.innerHTML='';
-  const catList = document.getElementById('categoryList');
-  catList.innerHTML='';
-
-  const snapshot = await getDocs(collection(db,'categories'));
-  snapshot.forEach(doc=>{
-    const cat = doc.data();
-    // dropdown
-    const opt = document.createElement('option'); opt.value = doc.id; opt.textContent = cat.name;
-    catSel.appendChild(opt);
-    // list
-    const div = document.createElement('div'); div.className='category-card';
-    div.innerHTML=`<strong>${cat.name}</strong>`;
-    catList.appendChild(div);
-  });
-}
-
-// Add category
-async function addCategory(){
-  const name = document.getElementById('catName').value.trim();
-  const file = document.getElementById('catImg').files[0];
-  if(!name || !file) return showToast('Fill all fields','error');
-
-  const imgRef = ref(storage, `categories/${file.name}`);
-  await uploadBytes(imgRef,file);
-  const url = await getDownloadURL(imgRef);
-
-  await addDoc(collection(db,'categories'),{name,img:url});
-  document.getElementById('catName').value=''; document.getElementById('catImg').value='';
-  showToast('Category added','success');
-  loadCategories();
-}
-
-// Add product
-async function addProduct(){
-  const name = document.getElementById('prodName').value.trim();
-  const desc = document.getElementById('prodDesc').value.trim();
-  const price = parseFloat(document.getElementById('prodPrice').value);
-  const file = document.getElementById('prodImg').files[0];
-  const catId = document.getElementById('prodCategory').value;
-
-  if(!name||!desc||!price||!file||!catId) return showToast('Fill all fields','error');
-
-  const imgRef = ref(storage, `products/${file.name}`);
-  await uploadBytes(imgRef,file);
-  const url = await getDownloadURL(imgRef);
-
-  await addDoc(collection(db,'products'),{
-    name,desc,price,img:url,categoryId:catId
-  });
-
-  document.getElementById('prodName').value=''; document.getElementById('prodDesc').value=''; 
-  document.getElementById('prodPrice').value=''; document.getElementById('prodImg').value='';
-
-  showToast('Product added','success');
-}
-
-loadCategories();
-
-function logout(){
-  localStorage.removeItem('ownerLoggedIn');
-  signOut(auth).then(()=>location.href='owner-login.html');
-}
-</script><!-- Only the relevant script part, use your existing HTML -->
 <script>
-/* ---------------- SECURITY ---------------- */
-if(localStorage.getItem("ownerLoggedIn")!=="true"){
-  location.href="owner-login.html";
+if(localStorage.getItem("ownerLoggedIn")!=="true") window.location.href="owner-login.html";
+
+// Data
+let categories = JSON.parse(localStorage.getItem("categories"))||[];
+let products = JSON.parse(localStorage.getItem("products"))||[];
+let orders = JSON.parse(localStorage.getItem("orders"))||[];
+let lastOrderCount = orders.length;
+
+const categoryList = document.getElementById("categoryList");
+const productList = document.getElementById("productList");
+const prodCategory = document.getElementById("prodCategory");
+const orderList = document.getElementById("orderList");
+
+function showToast(msg,type='info',duration=3000){
+  const container=document.getElementById('toastContainer');
+  const toast=document.createElement('div');
+  toast.className=`toast ${type} show`;
+  toast.textContent=msg;
+  container.appendChild(toast);
+  setTimeout(()=>{ toast.style.opacity='0'; toast.style.transform='translateY(-20px)'; setTimeout(()=>toast.remove(),300); },duration);
 }
 
-/* ---------------- LOAD DATA ---------------- */
-let categories = JSON.parse(localStorage.getItem("categories")) || [];
-let products = JSON.parse(localStorage.getItem("products")) || [];
-let orders = JSON.parse(localStorage.getItem("orders")) || [];
+function saveCategories(){ localStorage.setItem("categories", JSON.stringify(categories)); }
+function saveProducts(){ localStorage.setItem("products", JSON.stringify(products)); }
+function saveOrders(){ localStorage.setItem("orders", JSON.stringify(orders)); }
 
-/* ---------------- TOAST ---------------- */
-function showToast(msg,type="info"){
-  const t=document.createElement("div");
-  t.className=`toast ${type}`;
-  t.textContent=msg;
-  document.getElementById("toastContainer").appendChild(t);
-  setTimeout(()=>t.remove(),3000);
-}
-
-/* ---------------- CATEGORY ---------------- */
+// Category Functions
 function addCategory(){
-  const name = document.getElementById("catName").value.trim();
-  const file = document.getElementById("catImg").files[0];
-  if(!name || !file){ return showToast("Fill all category fields","error"); }
-
+  const name = catName.value.trim();
+  const file = catImg.files[0];
+  if(!name||!file) return showToast("Fill all category fields","error");
   const reader = new FileReader();
-  reader.onload = e=>{
-    categories.push({ name, img:e.target.result });
-    localStorage.setItem("categories", JSON.stringify(categories));
-    displayCategories(); showToast("Category added","success");
-    document.getElementById("catName").value = "";
-    document.getElementById("catImg").value = "";
+  reader.onload = e => {
+    categories.push({ name, img: e.target.result });
+    saveCategories(); displayCategories(); populateCategorySelect();
+    catName.value=''; catImg.value='';
+    showToast("Category added","success");
   };
   reader.readAsDataURL(file);
 }
-
 function displayCategories(){
-  const list = document.getElementById("categoryList");
-  list.innerHTML = "";
+  categoryList.innerHTML="";
   categories.forEach((c,i)=>{
-    const div = document.createElement("div");
-    div.className = "category-card";
-    div.innerHTML = `
+    const div=document.createElement('div'); div.className='category-card';
+    div.innerHTML=`
       <img src="${c.img}" style="width:100%;height:120px;object-fit:cover;">
       <strong>${c.name}</strong><br><br>
       <button class="small-btn edit-btn" onclick="editCategory(${i})">Edit</button>
       <button class="small-btn del-btn" onclick="deleteCategory(${i})">Delete</button>
     `;
-    list.appendChild(div);
+    categoryList.appendChild(div);
   });
 }
-
+function populateCategorySelect(){
+  prodCategory.innerHTML="";
+  categories.forEach((c,i)=>prodCategory.innerHTML+=`<option value="${i}">${c.name}</option>`);
+}
 function editCategory(i){
-  const newName = prompt("New name:", categories[i].name);
-  if(!newName) return;
+  const newName = prompt("New name:", categories[i].name); if(!newName) return;
   const oldName = categories[i].name;
   categories[i].name = newName;
-  products.forEach(p=>{if(p.category===oldName)p.category=newName});
-  localStorage.setItem("categories", JSON.stringify(categories));
-  localStorage.setItem("products", JSON.stringify(products));
-  displayCategories(); displayProducts();
+  products.forEach(p=>{ if(p.category===oldName) p.category=newName; });
+  saveCategories(); saveProducts();
+  displayCategories(); populateCategorySelect(); displayProducts();
   showToast("Category updated","info");
 }
-
 function deleteCategory(i){
   const catName = categories[i].name;
   categories.splice(i,1);
   products = products.filter(p=>p.category!==catName);
-  localStorage.setItem("categories", JSON.stringify(categories));
-  localStorage.setItem("products", JSON.stringify(products));
-  displayCategories(); displayProducts();
+  saveCategories(); saveProducts();
+  displayCategories(); populateCategorySelect(); displayProducts();
   showToast("Category deleted","info");
 }
 
-/* ---------------- PRODUCT ---------------- */
+// Product Functions
 function addProduct(){
-  const name = document.getElementById("prodName").value.trim();
-  const desc = document.getElementById("prodDesc").value.trim();
-  const price = parseFloat(document.getElementById("prodPrice").value);
-  const file = document.getElementById("prodImg").files[0];
-  const gauges = document.getElementById("prodGauges").value.split(",").map(s=>s.trim());
-  const categoryIndex = document.getElementById("prodCategory").value;
-  if(!name||!desc||!price||!file){ return showToast("Fill all product fields","error"); }
-
+  const name = prodName.value.trim();
+  const desc = prodDesc.value.trim();
+  const price = parseFloat(prodPrice.value);
+  const file = prodImg.files[0];
+  const gauges = prodGauges.value ? prodGauges.value.split(",").map(s=>s.trim()) : [];
+  if(!name||!desc||!price||!file) return showToast("Fill all product fields","error");
   const reader = new FileReader();
-  reader.onload = e=>{
+  reader.onload = e => {
     products.push({
-      id: "p"+Date.now(),
-      name, desc, price,
-      category: categories[categoryIndex].name,
-      gauges, img:e.target.result
+      id:"p"+Date.now(), name, desc, price, img:e.target.result,
+      gauges, category:categories[prodCategory.value]?.name||"Uncategorized"
     });
-    localStorage.setItem("products", JSON.stringify(products));
-    displayProducts(); showToast("Product added","success");
-    document.getElementById("prodName").value="";
-    document.getElementById("prodDesc").value="";
-    document.getElementById("prodPrice").value="";
-    document.getElementById("prodImg").value="";
-    document.getElementById("prodGauges").value="";
+    saveProducts(); displayProducts();
+    prodName.value=''; prodDesc.value=''; prodPrice.value=''; prodGauges.value=''; prodImg.value='';
+    showToast("Product added","success");
   };
   reader.readAsDataURL(file);
 }
-
 function displayProducts(){
-  const list = document.getElementById("productList");
-  list.innerHTML = "";
+  productList.innerHTML="";
   products.forEach((p,i)=>{
-    const div = document.createElement("div");
-    div.className="product-card";
+    const div=document.createElement('div'); div.className='product-card';
     div.innerHTML=`
       <img src="${p.img}" style="width:100%;height:120px;object-fit:cover;">
       <strong>${p.name}</strong><br>
       <small>${p.category}</small><br>
       KES ${p.price}<br><br>
-      ${p.desc.substring(0,100)}...<br>
-      Gauges: ${p.gauges.join(", ") || "None"}<br><br>
+      ${p.desc.substring(0,100)}...
+      <br><br>
+      Gauges: ${p.gauges.join(", ")||"None"}<br><br>
       <button class="small-btn edit-btn" onclick="editProduct(${i})">Edit</button>
       <button class="small-btn del-btn" onclick="deleteProduct(${i})">Delete</button>
     `;
-    list.appendChild(div);
+    productList.appendChild(div);
   });
 }
-
 function editProduct(i){
-  const p = products[i];
-  const n = prompt("Name:", p.name);
-  if(!n) return;
-  const d = prompt("Description:", p.desc);
-  if(!d) return;
-  const pr = prompt("Price:", p.price);
-  if(!pr) return;
-  const g = prompt("Gauges (comma-separated):", p.gauges.join(","));
-  products[i]={...p, name:n, desc:d, price:parseFloat(pr), gauges:g?g.split(",").map(s=>s.trim()):[]};
-  localStorage.setItem("products", JSON.stringify(products));
-  displayProducts(); showToast("Product updated","info");
+  const p=products[i];
+  const n=prompt("Name:",p.name); if(!n) return;
+  const d=prompt("Description:",p.desc); if(!d) return;
+  const pr=prompt("Price:",p.price); if(!pr) return;
+  const g=prompt("Gauges (comma-separated):",p.gauges.join(","))||"";
+  products[i]={...p,name:n,desc:d,price:parseFloat(pr),gauges:g.split(",").map(s=>s.trim())};
+  saveProducts(); displayProducts(); showToast("Product updated","info");
 }
+function deleteProduct(i){ products.splice(i,1); saveProducts(); displayProducts(); showToast("Product deleted","info"); }
 
-function deleteProduct(i){
-  products.splice(i,1);
-  localStorage.setItem("products", JSON.stringify(products));
-  displayProducts();
-  showToast("Product deleted","info");
+// Orders
+function displayOrders(){
+  orders=JSON.parse(localStorage.getItem("orders"))||[];
+  if(orders.length>lastOrderCount){
+    playNotification();
+    showToast(`${orders.length-lastOrderCount} new order(s) received!`,"success");
+  }
+  lastOrderCount = orders.length;
+
+  orderList.innerHTML="";
+  if(orders.length===0){ orderList.innerHTML="<p>No orders yet.</p>"; return; }
+
+  orders.slice().reverse().forEach((o,revIndex)=>{
+    const idx=orders.length-1-revIndex;
+    const card=document.createElement('div'); card.className='order-card';
+    let itemsHTML="";
+    o.items?.forEach(it=>itemsHTML+=`
+      <strong>Product:</strong> ${it.name}<br>
+      <strong>Category:</strong> ${it.category}<br>
+      <strong>Qty:</strong> ${it.quantity}<br>
+      <strong>Gauge:</strong> ${it.gauge||"None"}<br>
+      <strong>Price:</strong> KES ${it.price}<br>
+      <strong>Total:</strong> KES ${it.price*it.quantity}<br><hr>
+    `);
+    card.innerHTML=itemsHTML+`
+      <strong>Date:</strong> ${o.time||new Date().toLocaleString()}<br><br>
+      <strong>Customer:</strong><br>
+      ${o.customer?.name||"N/A"}<br>
+      ${o.customer?.phone||"N/A"}<br>
+      ${o.customer?.email||"N/A"}<br>
+      ${o.customer?.location||"N/A"}<br><br>
+      <button class="small-btn del-btn" onclick="deleteOrder(${idx})">Delete</button>
+      <button class="small-btn mark-btn" onclick="toggleCompleted(${idx})">${o.completed?"Completed ✓":"Mark Completed"}</button>
+    `;
+    orderList.appendChild(card);
+  });
 }
+function deleteOrder(i){ orders.splice(i,1); saveOrders(); displayOrders(); showToast("Order deleted","info"); }
+function toggleCompleted(i){ orders[i].completed=!orders[i].completed; saveOrders(); displayOrders(); showToast("Order status updated","info"); }
+function playNotification(){ document.getElementById("notifySound").play().catch(()=>{}); }
+function logout(){ localStorage.removeItem("ownerLoggedIn"); window.location.href="owner-login.html"; }
 
-/* ---------------- INIT ---------------- */
-window.onload = ()=>{
+setInterval(displayOrders,5000);
+
+window.onload=()=>{
   displayCategories();
+  populateCategorySelect();
   displayProducts();
+  displayOrders();
 };
 </script>
-
 </body>
 </html>

@@ -7,12 +7,21 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Roboto:wght@400&display=swap" rel="stylesheet">
 <style>
   body{ font-family:'Roboto',sans-serif; background:#2c2c2c; color:#fff; display:flex; justify-content:center; align-items:center; height:100vh; margin:0; }
-  .container{ background:#333; padding:40px; border-radius:15px; width:90%; max-width:400px; text-align:center; }
+  .container{ background:#333; padding:40px; border-radius:15px; width:90%; max-width:400px; text-align:center; position:relative; }
   h2{ font-family:'Playfair Display', serif; margin-bottom:30px; }
   input{ width:100%; padding:12px; margin-bottom:20px; border-radius:6px; border:1px solid #555; background:#444; color:#fff; font-size:1rem; }
   button{ width:100%; padding:14px; background:#ff9800; color:#fff; border:none; border-radius:8px; font-weight:bold; font-size:1.1rem; cursor:pointer; }
   button:hover{ background:#e68900; }
   .error{ color:#ff4d4d; margin-bottom:15px; display:none; }
+  .show-pass{ position:absolute; right:20px; top:152px; cursor:pointer; color:#ff9800; font-weight:bold; }
+  
+  /* Toast */
+  #toastContainer{ position:fixed; top:20px; right:20px; z-index:9999; display:flex; flex-direction:column; gap:10px; }
+  .toast{ padding:12px 20px; border-radius:8px; color:#fff; font-weight:bold; opacity:0; transform:translateX(100%); transition:0.5s; }
+  .toast.show{ opacity:1; transform:translateX(0); }
+  .toast.success{ background:#4caf50; }
+  .toast.error{ background:#d63031; }
+  .toast.info{ background:#2196f3; }
 </style>
 </head>
 <body>
@@ -21,42 +30,67 @@
   <h2>Owner Login</h2>
   <div class="error" id="errorMsg"></div>
   <input type="email" id="email" placeholder="Owner Email">
-  <input type="password" id="password" placeholder="Password">
+  <div style="position:relative;">
+    <input type="password" id="password" placeholder="Password">
+    <span id="togglePass" class="show-pass">Show</span>
+  </div>
   <button id="loginBtn">Login</button>
 </div>
 
+<div id="toastContainer"></div>
+
 <script type="module">
-import { auth } from './firebase.js';
+import { auth, db } from './firebase.js';
 import { signInWithEmailAndPassword, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
 const loginBtn = document.getElementById('loginBtn');
 const errorMsg = document.getElementById('errorMsg');
+const togglePass = document.getElementById('togglePass');
+const passwordInput = document.getElementById('password');
+
+function showToast(message, type='info', duration=4000){
+  const container=document.getElementById('toastContainer');
+  const toast=document.createElement('div');
+  toast.className=`toast ${type} show`;
+  toast.textContent = message;
+  container.appendChild(toast);
+  setTimeout(()=>{ toast.classList.remove('show'); setTimeout(()=>toast.remove(),500); }, duration);
+}
+
+// Toggle password visibility
+togglePass.addEventListener('click', ()=>{
+  if(passwordInput.type==='password'){ passwordInput.type='text'; togglePass.textContent='Hide'; }
+  else { passwordInput.type='password'; togglePass.textContent='Show'; }
+});
 
 loginBtn.addEventListener('click', async () => {
   const email = document.getElementById('email').value.trim();
-  const password = document.getElementById('password').value;
+  const password = passwordInput.value;
   errorMsg.style.display = 'none';
 
   if(!email || !password){
-    errorMsg.textContent = 'Please fill in all fields';
-    errorMsg.style.display = 'block';
+    showToast('Please fill in all fields','error');
     return;
   }
 
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    // Only allow the owner (you can replace with your UID check)
-    const ownerUID = 'YOUR_FIREBASE_OWNER_UID';
-    if(userCredential.user.uid !== ownerUID){
-      errorMsg.textContent = 'You are not authorized';
-      errorMsg.style.display = 'block';
+    const uid = userCredential.user.uid;
+
+    // Check Firestore if UID is in owners collection
+    const ownerDoc = await getDoc(doc(db, 'owners', uid));
+    if(!ownerDoc.exists()){
+      showToast('You are not authorized','error');
+      await auth.signOut();
       return;
     }
-    localStorage.setItem('ownerLoggedIn', 'true');
-    window.location.href = 'owner-dashboard.html';
+
+    localStorage.setItem('ownerLoggedIn','true');
+    showToast('Login successful','success');
+    setTimeout(()=> window.location.href = 'owner-dashboard.html', 800);
   } catch(err){
-    errorMsg.textContent = err.message;
-    errorMsg.style.display = 'block';
+    showToast(err.message,'error');
   }
 });
 

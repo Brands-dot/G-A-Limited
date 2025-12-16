@@ -40,16 +40,8 @@
 <div id="toastContainer"></div>
 
 <script>
-  const products = [
-    { 
-      name: "Steel", category: "Steel", img: "image/steel.jpeg", desc: "Premium steel rods and sheets suitable for construction and industrial use.",
-      price: 1200, gauges: ["10mm","12mm","16mm"] 
-    },
-    { 
-      name: "Solar Panel", category: "Solar", img: "image/solar.jpeg", desc: "High-efficiency panels for residential and commercial solar installations.",
-      price: 8000, gauges: [] 
-    }
-  ];
+  // Load products from localStorage
+  const products = JSON.parse(localStorage.getItem('products')) || [];
 
   // Get product index from URL
   const urlParams = new URLSearchParams(window.location.search);
@@ -58,19 +50,40 @@
 
   const container = document.getElementById('productContainer');
 
-  container.innerHTML = `
-    <img src="${product.img}" alt="${product.name}">
-    <h2>${product.name}</h2>
-    <p>${product.desc}</p>
-    <p class="price">KES ${product.price}</p>
-    ${product.gauges.length ? `<label>Gauge:
-      <select id="gaugeSelect">${product.gauges.map(g=>`<option value="${g}">${g}</option>`).join('')}</select>
-    </label>` : ''}
-    <label>Quantity:
-      <input type="number" id="qtyInput" value="1" min="1">
-    </label>
-    <button class="btn" id="addCartBtn">Add to Cart / Order</button>
-  `;
+  if(!product){
+    container.innerHTML = '<p>Product not found.</p>';
+  } else {
+    container.innerHTML = `
+      <img src="${product.img}" alt="${product.name}">
+      <h2>${product.name}</h2>
+      <p>${product.desc}</p>
+      <p class="price">KES ${product.price}</p>
+      ${product.gauges?.length ? `<label>Gauge:
+        <select id="gaugeSelect">${product.gauges.map(g=>`<option value="${g}">${g}</option>`).join('')}</select>
+      </label>` : ''}
+      <label>Quantity:
+        <input type="number" id="qtyInput" value="1" min="1">
+      </label>
+      <button class="btn" id="addCartBtn">Add to Cart / Order</button>
+    `;
+
+    // Add to Cart
+    document.getElementById('addCartBtn').addEventListener('click',()=>{
+      const qty = parseInt(document.getElementById('qtyInput').value);
+      const gauge = product.gauges?.length ? document.getElementById('gaugeSelect').value : null;
+      if(qty<1){ showToast('Quantity must be at least 1','error'); return; }
+
+      let cart = JSON.parse(localStorage.getItem('cart')) || [];
+      const existingIndex = cart.findIndex(item=>item.name===product.name && item.gauge===gauge);
+      if(existingIndex>-1){
+        cart[existingIndex].quantity += qty;
+      } else {
+        cart.push({ name: product.name, category: product.category, price: product.price, gauge, quantity: qty });
+      }
+      localStorage.setItem('cart',JSON.stringify(cart));
+      showToast('Product added to cart','success');
+    });
+  }
 
   // Toast function
   function showToast(message,type='info',duration=3000){
@@ -79,25 +92,12 @@
     toast.className=`toast ${type} show`;
     toast.textContent=message;
     container.appendChild(toast);
-    setTimeout(()=>{ toast.style.opacity='0'; toast.style.transform='translateY(-20px)'; setTimeout(()=>toast.remove(),300); },duration);
+    setTimeout(()=>{
+      toast.style.opacity='0';
+      toast.style.transform='translateY(-20px)';
+      setTimeout(()=>toast.remove(),300);
+    },duration);
   }
-
-  // Add to Cart
-  document.getElementById('addCartBtn').addEventListener('click',()=>{
-    const qty = parseInt(document.getElementById('qtyInput').value);
-    const gauge = product.gauges.length ? document.getElementById('gaugeSelect').value : null;
-    if(qty<1){ showToast('Quantity must be at least 1','error'); return; }
-
-    let cart = JSON.parse(localStorage.getItem('cart')) || [];
-    const existingIndex = cart.findIndex(item=>item.name===product.name && item.gauge===gauge);
-    if(existingIndex>-1){
-      cart[existingIndex].quantity += qty;
-    } else {
-      cart.push({ name: product.name, category: product.category, price: product.price, gauge, quantity: qty });
-    }
-    localStorage.setItem('cart',JSON.stringify(cart));
-    showToast('Product added to cart','success');
-  });
 </script>
 
 </body>

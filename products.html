@@ -3,218 +3,341 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>G&A Limited - Products</title>
+
+<title>Products | G&A Limited</title>
+
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Roboto:wght@400&display=swap" rel="stylesheet">
+
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
-body{font-family:'Roboto',sans-serif;background:#f4f4f9;color:#333;display:flex;flex-direction:column;min-height:100vh;}
+body{
+  font-family:'Roboto',sans-serif;
+  background:#f4f4f9;
+  color:#333;
+  display:flex;
+  flex-direction:column;
+  min-height:100vh;
+}
 
 /* HEADER */
-header{background:#222;color:#fff;padding:15px 30px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100;}
-header a{color:#fff;text-decoration:none;margin-left:20px;transition:0.3s;font-weight:500;}
+header{
+  background:#222;
+  color:#fff;
+  padding:15px 30px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  position:sticky;
+  top:0;
+  z-index:100;
+}
+header a{
+  color:#fff;
+  text-decoration:none;
+  margin-left:20px;
+  transition:0.3s;
+  font-weight:500;
+}
 header a:hover{color:#ff9800;}
-.logo{font-family:'Playfair Display', serif;font-size:1.8rem;font-weight:bold;}
+.logo{
+  font-family:'Playfair Display', serif;
+  font-size:1.8rem;
+}
 
-/* MAIN CONTAINER */
-.container{max-width:1200px;margin:50px auto;padding:0 20px;flex:1;}
-h2{font-family:'Playfair Display', serif;font-size:2.5rem;margin-bottom:40px;text-align:center;color:#222;}
+/* MAIN */
+.container{
+  max-width:1200px;
+  margin:50px auto;
+  padding:0 20px;
+  flex:1;
+}
+h2{
+  font-family:'Playfair Display', serif;
+  font-size:2.5rem;
+  margin-bottom:40px;
+  text-align:center;
+}
 
 /* GRID */
-.grid{display:flex;flex-wrap:wrap;gap:30px;justify-content:center;}
+.grid{
+  display:flex;
+  flex-wrap:wrap;
+  gap:30px;
+  justify-content:center;
+}
 
 /* CARD */
-.card{background:#fff;border-radius:15px;overflow:hidden;box-shadow:0 10px 25px rgba(0,0,0,0.1);width:300px;transition:transform 0.3s,box-shadow 0.3s;display:flex;flex-direction:column;cursor:pointer;}
-.card:hover{transform:translateY(-8px);box-shadow:0 15px 30px rgba(0,0,0,0.2);}
-.card img{width:100%;height:200px;object-fit:cover;}
-.card-content{padding:20px;flex:1;}
-.card-content h3{font-family:'Playfair Display', serif;font-size:1.5rem;margin-bottom:12px;color:#222;}
-.card-content p{font-size:1rem;margin-bottom:12px;color:#555;}
-.btn{display:inline-block;padding:12px 25px;background:#ff9800;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold;transition:0.3s;cursor:pointer;}
+.card{
+  background:#fff;
+  border-radius:15px;
+  overflow:hidden;
+  box-shadow:0 10px 25px rgba(0,0,0,0.1);
+  width:300px;
+  transition:0.3s;
+  cursor:pointer;
+}
+.card:hover{
+  transform:translateY(-8px);
+  box-shadow:0 15px 30px rgba(0,0,0,0.2);
+}
+.card img{
+  width:100%;
+  height:200px;
+  object-fit:cover;
+}
+.card-content{
+  padding:20px;
+}
+.card-content h3{
+  font-family:'Playfair Display', serif;
+  font-size:1.5rem;
+  margin-bottom:10px;
+}
+.card-content p{
+  margin-bottom:10px;
+  color:#555;
+}
+
+/* BUTTON */
+.btn{
+  display:inline-block;
+  padding:12px 25px;
+  background:#ff9800;
+  color:#fff;
+  border-radius:8px;
+  text-decoration:none;
+  font-weight:bold;
+  cursor:pointer;
+}
 .btn:hover{background:#e68900;}
 
-/* BACK BUTTON */
-.back{margin-bottom:20px;display:inline-block;color:#ff9800;cursor:pointer;}
+/* BACK */
+.back{
+  margin-top:20px;
+  display:inline-block;
+  color:#ff9800;
+  cursor:pointer;
+}
 
-/* FOOTER FIXED AT BOTTOM */
-footer{background:#222;color:#fff;text-align:center;padding:25px;margin-top:auto;}
+/* FOOTER */
+footer{
+  background:#222;
+  color:#fff;
+  text-align:center;
+  padding:25px;
+  margin-top:auto;
+}
 
-/* MODAL POPUP */
-#modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.75);display:none;justify-content:center;align-items:center;z-index:999;}
-.modal-box{background:#fff;width:90%;max-width:500px;border-radius:15px;padding:20px;text-align:center;}
-.modal-box img{width:100%;height:250px;object-fit:cover;border-radius:12px;}
-.modal-box input, .modal-box select{margin:10px 0;padding:10px;width:60%;}
-.close-btn{margin-top:15px;background:#222;color:#fff;padding:10px 20px;cursor:pointer;}
+/* MODAL */
+#modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.75);
+  display:none;
+  justify-content:center;
+  align-items:center;
+  z-index:999;
+}
+.modal-box{
+  background:#fff;
+  width:90%;
+  max-width:500px;
+  border-radius:15px;
+  padding:20px;
+  text-align:center;
+}
+.modal-box img{
+  width:100%;
+  height:250px;
+  object-fit:cover;
+  border-radius:12px;
+}
+.modal-box select,
+.modal-box input{
+  width:80%;
+  padding:10px;
+  margin:10px 0;
+}
+.close-btn{
+  margin-top:15px;
+  background:#222;
+  color:#fff;
+}
 
-/* TOAST NOTIFICATIONS */
-#toastContainer{position:fixed;top:20px;right:20px;z-index:1000;display:flex;flex-direction:column;gap:10px;}
-.toast{padding:15px 20px;border-radius:10px;color:#fff;min-width:200px;font-weight:bold;opacity:0;transform: translateY(-20px);transition:0.3s;}
+/* TOAST */
+#toastContainer{
+  position:fixed;
+  top:20px;
+  right:20px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  z-index:1000;
+}
+.toast{
+  padding:15px 20px;
+  border-radius:10px;
+  color:#fff;
+  font-weight:bold;
+  opacity:0;
+  transform:translateY(-10px);
+  transition:0.3s;
+}
+.toast.show{opacity:1;transform:translateY(0);}
 .toast.success{background:#4caf50;}
-.toast.error{background:#d63031;}
 .toast.info{background:#2196f3;}
-.toast.show{opacity:1; transform:translateY(0);}
-@media(max-width:1024px){.card{width:45%;}}
-@media(max-width:768px){.card{width:90%;}}
+
+@media(max-width:768px){
+  .card{width:90%;}
+}
 </style>
 </head>
+
 <body>
 
 <header>
   <div class="logo">G&A Limited</div>
   <nav>
     <a href="index.html">Home</a>
-    <a href="#categories">Categories</a>
-    <a href="cart.html" style="margin-left:10px;">Cart</a>
+    <a href="cart.html">Cart</a>
   </nav>
 </header>
 
 <div class="container">
   <h2 id="title">Product Categories</h2>
+
   <div class="grid" id="categories"></div>
   <div class="grid" id="products" style="display:none;"></div>
-  <span class="back" id="backBtn" style="display:none;" onclick="showCategories()">&#8592; Back to Categories</span>
+
+  <span class="back" id="backBtn" style="display:none;">← Back to Categories</span>
 </div>
 
 <footer>
-  <p>Contact us: info@galimited.com | +254 700 000 000</p>
-  <p>&copy; 2025 G&A Limited. All rights reserved.</p>
+  <p>Contact: info@galimited.com | +254 700 000 000</p>
+  <p>&copy; 2025 G&A Limited</p>
 </footer>
 
-<!-- PRODUCT MODAL -->
+<!-- MODAL -->
 <div id="modal">
   <div class="modal-box">
     <img id="modalImg">
     <h2 id="modalName"></h2>
     <p id="modalDesc"></p>
     <p><strong id="modalPrice"></strong></p>
-    <p id="modalGauges"></p>
-    <label>Choose Gauge:</label>
+
+    <label>Gauge</label>
     <select id="modalGauge"></select>
-    <label>Quantity:</label>
+
+    <label>Quantity</label>
     <input type="number" id="modalQty" value="1" min="1">
-    <button class="btn" id="addToCartBtn">Add to Cart</button>
-    <div class="btn close-btn" onclick="closeModal()">Close</div>
+
+    <button class="btn" id="addBtn">Add to Cart</button>
+    <button class="btn close-btn" onclick="closeModal()">Close</button>
   </div>
 </div>
 
-<!-- TOAST -->
 <div id="toastContainer"></div>
 
 <script>
-// Elements
-const categoriesDiv=document.getElementById('categories');
-const productsDiv=document.getElementById('products');
-const title=document.getElementById('title');
-const backBtn=document.getElementById('backBtn');
-const modal=document.getElementById('modal');
-const modalImg=document.getElementById('modalImg');
-const modalName=document.getElementById('modalName');
-const modalDesc=document.getElementById('modalDesc');
-const modalPrice=document.getElementById('modalPrice');
-const modalGauge=document.getElementById('modalGauge');
-const modalQty=document.getElementById('modalQty');
-const addToCartBtn=document.getElementById('addToCartBtn');
+const categories = JSON.parse(localStorage.getItem("categories")) || [];
+const products = JSON.parse(localStorage.getItem("products")) || [];
 
-// Data
-const categories=JSON.parse(localStorage.getItem('categories'))||[];
-const products=JSON.parse(localStorage.getItem('products'))||[];
+const categoriesDiv = document.getElementById("categories");
+const productsDiv = document.getElementById("products");
+const title = document.getElementById("title");
+const backBtn = document.getElementById("backBtn");
 
-// Toast
-function showToast(message,type='info',duration=3000){
-    const container=document.getElementById('toastContainer');
-    const toast=document.createElement('div');
-    toast.className=`toast ${type} show`;
-    toast.textContent=message;
-    container.appendChild(toast);
-    setTimeout(()=>{ toast.remove(); },duration);
+const modal = document.getElementById("modal");
+const modalImg = document.getElementById("modalImg");
+const modalName = document.getElementById("modalName");
+const modalDesc = document.getElementById("modalDesc");
+const modalPrice = document.getElementById("modalPrice");
+const modalGauge = document.getElementById("modalGauge");
+const modalQty = document.getElementById("modalQty");
+const addBtn = document.getElementById("addBtn");
+
+function toast(msg,type="info"){
+  const t=document.createElement("div");
+  t.className=`toast ${type} show`;
+  t.textContent=msg;
+  document.getElementById("toastContainer").appendChild(t);
+  setTimeout(()=>t.remove(),3000);
 }
 
-// Show Categories
 function showCategories(){
   title.textContent="Product Categories";
-  categoriesDiv.style.display='flex';
-  productsDiv.style.display='none';
-  backBtn.style.display='none';
+  categoriesDiv.style.display="flex";
+  productsDiv.style.display="none";
+  backBtn.style.display="none";
 }
 
-// Show Products for a Category
-function showProducts(catName){
-  title.textContent=catName+" Products";
-  categoriesDiv.style.display='none';
-  productsDiv.style.display='flex';
-  backBtn.style.display='inline-block';
-  productsDiv.innerHTML='';
+function showProducts(cat){
+  title.textContent=cat+" Products";
+  categoriesDiv.style.display="none";
+  productsDiv.style.display="flex";
+  backBtn.style.display="inline-block";
+  productsDiv.innerHTML="";
 
-  const filtered=products.filter(p=>p.category===catName);
-  filtered.forEach(p=>{
-    const card=document.createElement('div');
-    card.className='card';
-    card.innerHTML=`
-      <img src="${p.img}" alt="${p.name}">
+  products.filter(p=>p.category===cat).forEach(p=>{
+    const c=document.createElement("div");
+    c.className="card";
+    c.innerHTML=`
+      <img src="${p.img}">
       <div class="card-content">
         <h3>${p.name}</h3>
         <p>${p.desc}</p>
         <p><strong>KES ${p.price}</strong></p>
-        <p>Gauges: ${p.gauges.join(', ') || 'None'}</p>
-        <a class="btn view-btn">View</a>
-      </div>
-    `;
-    card.querySelector('.view-btn').onclick=()=>openModal(p);
-    productsDiv.appendChild(card);
+        <span class="btn">View</span>
+      </div>`;
+    c.onclick=()=>openModal(p);
+    productsDiv.appendChild(c);
   });
 }
 
-// Open Modal
 function openModal(p){
   modalImg.src=p.img;
   modalName.textContent=p.name;
   modalDesc.textContent=p.desc;
   modalPrice.textContent="KES "+p.price;
 
-  modalGauge.innerHTML='';
-  if(p.gauges.length){
-    p.gauges.forEach(g=>{
-      const option=document.createElement('option');
-      option.value=g;
-      option.textContent=g;
-      modalGauge.appendChild(option);
-    });
-  }else{
-    const option=document.createElement('option');
-    option.value='';
-    option.textContent='None';
-    modalGauge.appendChild(option);
-  }
+  modalGauge.innerHTML="";
+  (p.gauges.length?p.gauges:["None"]).forEach(g=>{
+    const o=document.createElement("option");
+    o.textContent=g;
+    modalGauge.appendChild(o);
+  });
 
-  modalQty.value=1;
-  modal.style.display='flex';
-
-  addToCartBtn.onclick=function(){
-    const cart=JSON.parse(localStorage.getItem('cart'))||[];
-    cart.push({name:p.name,price:p.price,gauge:modalGauge.value,quantity:parseInt(modalQty.value),img:p.img});
-    localStorage.setItem('cart',JSON.stringify(cart));
-    showToast('Item added to cart!','success');
+  addBtn.onclick=()=>{
+    const cart=JSON.parse(localStorage.getItem("cart"))||[];
+    cart.push({name:p.name,price:p.price,qty:modalQty.value,img:p.img});
+    localStorage.setItem("cart",JSON.stringify(cart));
+    toast("Added to cart","success");
     closeModal();
-  }
+  };
+
+  modal.style.display="flex";
 }
 
-function closeModal(){ modal.style.display='none'; }
+function closeModal(){ modal.style.display="none"; }
 
-// Load categories
+backBtn.onclick=showCategories;
+
 function loadCategories(){
-  categoriesDiv.innerHTML='';
-  categories.forEach(cat=>{
-    const card=document.createElement('div');
-    card.className='card';
+  if(!categories.length){
+    categoriesDiv.innerHTML="<p>No categories added yet.</p>";
+    return;
+  }
+  categories.forEach(c=>{
+    const card=document.createElement("div");
+    card.className="card";
     card.innerHTML=`
-      <img src="${cat.img}" alt="${cat.name}">
-      <div class="card-content"><h3>${cat.name}</h3></div>
-    `;
-    card.onclick=()=>showProducts(cat.name);
+      <img src="${c.img}">
+      <div class="card-content"><h3>${c.name}</h3></div>`;
+    card.onclick=()=>showProducts(c.name);
     categoriesDiv.appendChild(card);
   });
 }
 
-// Initialize
 loadCategories();
 </script>
 
